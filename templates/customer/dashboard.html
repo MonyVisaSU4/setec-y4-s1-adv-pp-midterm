@@ -1,0 +1,122 @@
+{% extends "layouts/base.html" %}
+
+{% block contents %}
+    <div class="content-wrapper">
+        <!-- Page Header -->
+        <div class="page-header">
+            <h3 class="page-title">
+              <span class="page-title-icon bg-gradient-success text-white mr-2">
+                <i class="mdi mdi-home"></i>
+              </span> Borrower Portal
+            </h3>
+            <nav aria-label="breadcrumb">
+                <ul class="breadcrumb">
+                    <li class="breadcrumb-item active" aria-current="page">
+                        <span></span>Overview <i class="mdi mdi-check-circle text-success align-middle"></i>
+                    </li>
+                </ul>
+            </nav>
+        </div>
+
+        <!-- Stats Cards -->
+        <div class="row">
+            <div class="col-md-4 stretch-card grid-margin">
+                <div class="card bg-gradient-success card-img-holder text-white">
+                    <div class="card-body">
+                        <img src="assets/images/dashboard/circle.svg" class="card-img-absolute" alt="circle-image"/>
+                        <h4 class="font-weight-normal mb-3">Total Borrowed <i
+                                class="mdi mdi-trending-up mdi-24px float-right"></i></h4>
+                        <h2 class="mb-5" id="cust-stat-borrowed">$0.00</h2>
+                        <p class="card-text">Principal of active loan agreements</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 stretch-card grid-margin">
+                <div class="card bg-gradient-danger card-img-holder text-white">
+                    <div class="card-body">
+                        <img src="assets/images/dashboard/circle.svg" class="card-img-absolute" alt="circle-image"/>
+                        <h4 class="font-weight-normal mb-3">Remaining Balance <i
+                                class="mdi mdi-scale-balance mdi-24px float-right"></i></h4>
+                        <h2 class="mb-5" id="cust-stat-balance">$0.00</h2>
+                        <p class="card-text">Principal + Flat Interest outstanding</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 stretch-card grid-margin">
+                <div class="card bg-gradient-warning card-img-holder text-white">
+                    <div class="card-body">
+                        <img src="assets/images/dashboard/circle.svg" class="card-img-absolute" alt="circle-image"/>
+                        <h4 class="font-weight-normal mb-3">Next Due Installment <i
+                                class="mdi mdi-calendar-clock mdi-24px float-right"></i></h4>
+                        <h2 class="mb-3" id="cust-stat-due-amount">$0.00</h2>
+                        <p class="card-text mb-0">Due Date: <span class="font-weight-bold"
+                                                                  id="cust-stat-due-date">N/A</span></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- My Loans table -->
+        <div class="row">
+            <div class="col-12 grid-margin stretch-card">
+                <div class="card">
+                    <div class="card-body">
+                        <h4 class="card-title"><i class="mdi mdi-cash-multiple mr-2 text-success"></i>My Loan Portfolios
+                        </h4>
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                <tr>
+                                    <th> Principal Amount</th>
+                                    <th> Interest Rate</th>
+                                    <th> Duration</th>
+                                    <th> Total Repayable</th>
+                                    <th> Total Paid</th>
+                                    <th> Status</th>
+                                    <th> Start Date</th>
+                                    <th> Action</th>
+                                </tr>
+                                </thead>
+                                <tbody id="my-loans-table-body">
+                                {% if list is not none %}
+                                    {% for l in list %}
+                                        <tr>
+                                            <td class="font-weight-bold"> ${{ l.principle }} </td>
+                                            <td> {{ l.interest_rate }}%</td>
+                                            <td> {{ l.duration }} mo</td>
+                                            <td class="font-weight-bold text-dark">
+                                                ${{ l.total_repayable }}
+                                            </td>
+                                            <td class="text-success font-weight-bold">
+                                                ${{ l.total_paid }}
+                                            </td>
+                                            <td><span class="badge ${badgeClass}">{{ l.status }}</span></td>
+                                            <td> {{ l.start_date }}</td>
+                                            <td>
+                                                <a href="{{ url_for('customer.profile') }}"
+                                                   class="btn btn-sm btn-gradient-info btn-icon-text">
+                                                    <i class="mdi mdi-eye mr-1"></i>View Schedule
+                                                </a>
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+
+                                {% else %}
+                                    <tr>
+                                        <td colspan="9" class="text-center text-muted py-4">
+                                            You do not have any active or past loans.
+                                        </td>
+                                    </tr>
+                                {% endif %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+    <!-- content-wrapper ends -->
+    <footer class="footer" id="footer"></footer>
+{% endblock %}

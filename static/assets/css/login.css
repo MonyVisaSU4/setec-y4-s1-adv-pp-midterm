@@ -1,0 +1,11 @@
+.auth .auth-form-light {
+    background: #ffffff;
+    border-radius: 8px;
+    box-shadow: 0px 8px 20px rgba(0, 0, 0, 0.05);
+}
+
+.demo-box {
+    background: #f8f9fa;
+    border-left: 4px solid #b66dff;
+    border-radius: 4px;
+}

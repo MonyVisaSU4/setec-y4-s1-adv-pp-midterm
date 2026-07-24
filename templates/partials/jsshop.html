@@ -1,0 +1,39 @@
+<script src="{{ url_for('static', filename='assets/js/layout.js') }}"></script>
+<script src="{{ url_for('static', filename='assets/js/js-inject-style-layout.js') }}"></script>
+<script src="{{ url_for('static', filename='assets/js/navbar.js') }}"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+{% include "partials/jsborrower/filter-search.html" %}
+
+<script>
+    const handleSweetAlert = (id, page) => {
+        function confirmSubmit() {
+            Swal.fire({
+                title: 'Are you sure?',
+                text: "There is no going back.",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonText: 'Ok'
+            }).then((result) => {
+                if (result.value) {
+                    if(page.name === 'borrower'){
+                        console.log("Borrower: ", id)
+                    } else{
+                        console.log("Loan: ", id)
+                    }
+                    // come back soon
+                    // go to: https://claude.ai/chat/17b9f4bd-ac1c-46cf-9e57-0d951b8699cb#:~:text=was%20actually%20deleted.-,The%20right%20flow,-User%20clicks%20confirm
+                }
+            });
+        }
+
+        return confirmSubmit();
+    }
+</script>
+
+<script>
+    window.addEventListener('pageshow', function (event) {
+        if (event.persisted) {
+            window.location.reload();
+        }
+    });
+</script>

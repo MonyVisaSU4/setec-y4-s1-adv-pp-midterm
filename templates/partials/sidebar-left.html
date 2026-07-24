@@ -1,0 +1,116 @@
+<nav class="sidebar sidebar-offcanvas position-fixed h-100" style="padding-top: 5%" id="sidebar"></nav>
+
+<script>
+    const sidebarEl = document.getElementById("sidebar")
+    let navItemsHtml = "";
+    const highlight = "color: #f62afa;";
+
+    {% if request.blueprint == 'admin' %}
+        // Build nav <li> items
+
+        const admin_route = {
+            dashboard: "{{ url_for('admin.dashboard') }}",
+            borrower: "{{ url_for('admin.borrower') }}",
+            report: "{{ url_for('admin.report') }}",
+            loan: "{{ url_for('admin.loan') }}"
+        }
+
+        // Menu links — icon LEFT, title RIGHT (standard Bootstrap Admin order)
+        navItemsHtml += `
+          <li class="nav-item">
+              <a class="nav-link gap-3" href="${admin_route.dashboard}">
+                <i class="mdi mdi-speedometer menu-icon" style="margin-bottom: 1.5px;"></i>
+                <span class="menu-title" style="${window.location.pathname === admin_route.dashboard ? highlight : ''}">Dashboard</span>
+              </a>
+            </li>
+
+            <li class="nav-item">
+              <a class="nav-link gap-3" href="${admin_route.borrower}">
+                <i class="mdi mdi-account-multiple menu-icon" style="margin-bottom: 1.5px;"></i>
+                <span class="menu-title" style="${window.location.pathname === admin_route.borrower ? highlight : ''}">Borrowers</span>
+              </a>
+            </li>
+
+            <li class="nav-item">
+              <a class="nav-link gap-3" href="${admin_route.loan}">
+                <i class="mdi mdi-cash-multiple menu-icon" style="margin-bottom: 1.5px;"></i>
+                <span class="menu-title" style="${window.location.pathname === admin_route.loan ? highlight : ''}">Loans</span>
+              </a>
+            </li>
+
+            <li class="nav-item">
+              <a class="nav-link gap-3" href="${admin_route.report}">
+                <i class="mdi mdi-file-document menu-icon" style="margin-bottom: 1.5px;"></i>
+                <span class="menu-title" style="${window.location.pathname === admin_route.report ? highlight : ''}">Reports</span>
+              </a>
+            </li>
+        `;
+
+        // Logout
+        navItemsHtml += `
+        <li class="nav-item sidebar-actions">
+          <span class="nav-link">
+            <a class="btn btn-block btn-gradient-danger btn-sm" href="{{ url_for('logout') }}">
+              <i class="mdi mdi-logout mr-2"></i>Logout
+            </a>
+          </span>
+        </li>
+      `;
+
+        // Full sidebar HTML — brand wrapper + nav
+        sidebarEl.innerHTML = `
+        <ul class="nav" style="align-items: start">
+          ${navItemsHtml}
+        </ul>
+      `;
+    {% else %}
+        // Build nav <li> items
+        const customer_route = {
+            dashboard: "{{ url_for('customer.dashboard') }}",
+            profile: "{{ url_for('customer.profile') }}",
+            loan: "{{ url_for('customer.loan') }}"
+        }
+
+        // Menu links — icon LEFT, title RIGHT (standard Bootstrap Admin order)
+        navItemsHtml += `
+          <li class="nav-item">
+              <a class="nav-link gap-3" href="${customer_route.dashboard}">
+                <i class="mdi mdi-speedometer menu-icon" style="margin-bottom: 1.5px;"></i>
+                <span class="menu-title" style="${window.location.pathname === customer_route.dashboard ? highlight : ''}">Dashboard</span>
+              </a>
+            </li>
+
+            <li class="nav-item">
+              <a class="nav-link gap-3" href="${customer_route.profile}">
+                <i class="mdi mdi-account-multiple menu-icon" style="margin-bottom: 1.5px;"></i>
+                <span class="menu-title" style="${window.location.pathname === customer_route.borrower ? highlight : ''}">My Profile</span>
+              </a>
+            </li>
+
+            <li class="nav-item">
+              <a class="nav-link gap-3" href="${customer_route.loan}">
+                <i class="mdi mdi-cash-multiple menu-icon" style="margin-bottom: 1.5px;"></i>
+                <span class="menu-title" style="${window.location.pathname === customer_route.loan ? highlight : ''}">My Loan</span>
+              </a>
+            </li>
+        `;
+
+        // Logout
+        navItemsHtml += `
+        <li class="nav-item sidebar-actions">
+          <span class="nav-link">
+            <a class="btn btn-block btn-gradient-danger btn-sm" href="{{ url_for('logout') }}">
+              <i class="mdi mdi-logout mr-2"></i>Logout
+            </a>
+          </span>
+        </li>
+      `;
+
+        // Full sidebar HTML — brand wrapper + nav
+        sidebarEl.innerHTML = `
+        <ul class="nav" style="align-items: start">
+          ${navItemsHtml}
+        </ul>
+      `;
+    {% endif %}
+</script>

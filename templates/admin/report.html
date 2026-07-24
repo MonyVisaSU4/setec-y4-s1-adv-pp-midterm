@@ -1,0 +1,129 @@
+{% extends "layouts/base.html" %}
+
+{% block contents %}
+    <div class="content-wrapper">
+        <!-- Page Header -->
+        <div class="page-header flex-wrap">
+            <h3 class="page-title">
+              <span class="page-title-icon bg-gradient-primary text-white mr-2">
+                <i class="mdi mdi-file-document"></i>
+              </span> Reports & Audits
+            </h3>
+            <div class="d-flex align-items-center mt-2 mt-md-0">
+                <button class="btn btn-gradient-success btn-icon-text font-weight-bold" onclick="exportCSV()">
+                    <i class="mdi mdi-file-export mr-2"></i> Export to CSV
+                </button>
+            </div>
+        </div>
+
+        <!-- Filters Card -->
+        <div class="row mb-4">
+            <div class="col-12 grid-margin stretch-card">
+                <div class="card">
+                    <div class="card-body">
+                        <h4 class="card-title"><i class="mdi mdi-filter mr-1 text-primary"></i>Query Criteria</h4>
+                        <div class="row">
+                            <div class="col-md-4 form-group">
+                                <label class="font-weight-bold">Status</label>
+                                <select class="form-control" id="rep-status" onchange="runReport()">
+                                    <option value="All">All Statuses</option>
+                                    <option value="Pending">Pending</option>
+                                    <option value="Active">Active</option>
+                                    <option value="Closed">Closed</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4 form-group">
+                                <label class="font-weight-bold">Start Date From</label>
+                                <input type="date" class="form-control" id="rep-start" onchange="runReport()">
+                            </div>
+                            <div class="col-md-4 form-group">
+                                <label class="font-weight-bold">Start Date To</label>
+                                <input type="date" class="form-control" id="rep-end" onchange="runReport()">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Aggregations Box -->
+        <div class="row grid-margin" id="summary-boxes">
+            <div class="col-sm-3 stretch-card mb-2 mb-sm-0">
+                <div class="card card-body text-center bg-light text-dark py-4 border">
+                    <p class="text-muted text-small mb-1">Matching Loans</p>
+                    <h3 class="font-weight-bold" id="sum-count">0</h3>
+                </div>
+            </div>
+            <div class="col-sm-3 stretch-card mb-2 mb-sm-0">
+                <div class="card card-body text-center bg-light text-dark py-4 border">
+                    <p class="text-muted text-small mb-1">Disbursed Principal</p>
+                    <h3 class="font-weight-bold text-primary" id="sum-principal">$0.00</h3>
+                </div>
+            </div>
+            <div class="col-sm-3 stretch-card mb-2 mb-sm-0">
+                <div class="card card-body text-center bg-light text-dark py-4 border">
+                    <p class="text-muted text-small mb-1">Expected Interest</p>
+                    <h3 class="font-weight-bold text-warning" id="sum-interest">$0.00</h3>
+                </div>
+            </div>
+            <div class="col-sm-3 stretch-card">
+                <div class="card card-body text-center bg-light text-dark py-4 border">
+                    <p class="text-muted text-small mb-1">Collected Repayments</p>
+                    <h3 class="font-weight-bold text-success" id="sum-collected">$0.00</h3>
+                </div>
+            </div>
+        </div>
+
+        <!-- Filtered Results Table -->
+        <div class="row">
+            <div class="col-12 grid-margin stretch-card">
+                <div class="card">
+                    <div class="card-body">
+                        <h4 class="card-title">Audited Loan Records</h4>
+                        <div class="table-responsive">
+                            <table class="table table-striped table-hover">
+                                <thead>
+                                <tr>
+                                    <th> Borrower Name</th>
+                                    <th> Principal</th>
+                                    <th> Rate</th>
+                                    <th> Tenure</th>
+                                    <th> Total Repayable</th>
+                                    <th> Status</th>
+                                    <th> Start Date</th>
+                                </tr>
+                                </thead>
+                                <tbody id="report-table-body">
+                                {% if list is none %}
+                                    <tr>
+                                        <td colspan="8" class="text-center text-muted py-4">No loan records match the
+                                            query.
+                                        </td>
+                                    </tr>
+                                {% else %}
+                                    {% for l in list %}
+                                        <tr>
+                                            <td class="font-weight-bold">{{ l.name }}</td>
+                                            <td>${{ l.principal }}</td>
+                                            <td>{{ l.rate }}%</td>
+                                            <td>{{ l.tenure }} mo</td>
+                                            <td class="font-weight-bold text-dark">
+                                                ${{ l.total_repayable }}
+                                            </td>
+                                            <td><span class="badge badge-pending">{{ l.status }}</span></td>
+                                            <td>{{ l.start_date }}</td>
+                                        </tr>
+                                    {% endfor %}
+                                {% endif %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+    <!-- content-wrapper ends -->
+    <footer class="footer" id="footer"></footer>
+{% endblock %}

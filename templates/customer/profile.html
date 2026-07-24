@@ -1,0 +1,77 @@
+{% extends "layouts/base.html" %}
+
+{% block contents %}
+	<div class="content-wrapper">
+          <!-- Page Header -->
+          <div class="page-header">
+            <h3 class="page-title">
+              <span class="page-title-icon bg-gradient-success text-white mr-2">
+                <i class="mdi mdi-account"></i>
+              </span> My Profile
+            </h3>
+            <nav aria-label="breadcrumb">
+              <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="customer_dashboard.html">Home</a></li>
+                <li class="breadcrumb-item active" aria-current="page">Profile</li>
+              </ol>
+            </nav>
+          </div>
+
+          <!-- Alert area -->
+          <div id="alert-container" class="alert alert-danger d-none" role="alert"></div>
+
+          <!-- Profile Details Card -->
+          <div class="row" id="profile-container">
+            <div class="col-md-7 grid-margin stretch-card mx-auto">
+              <div class="card">
+                <div class="card-body">
+                  <!-- Header profile face -->
+                  <div class="text-center pb-4 border-bottom">
+                    <img id="cust-profile-avatar" src="assets/images/faces/face2.jpg" alt="profile" class="img-lg rounded-circle mb-3" style="width:100px; height:100px; object-fit:cover;">
+                    <h3 class="font-weight-bold mb-1" id="cust-profile-name">John Doe</h3>
+                    <p class="text-success font-weight-bold" id="cust-profile-id">ID: CUST_1</p>
+                  </div>
+
+                  <div class="py-4 text-dark">
+                    <div class="row mb-3">
+                      <div class="col-sm-4 font-weight-bold"><i class="mdi mdi-card-bulleted-outline mr-2 text-primary"></i>National ID / Passport</div>
+                      <div class="col-sm-8 text-muted" id="cust-profile-nid">-</div>
+                    </div>
+                    <div class="row mb-3">
+                      <div class="col-sm-4 font-weight-bold"><i class="mdi mdi-phone mr-2 text-primary"></i>Phone Number</div>
+                      <div class="col-sm-8 text-muted" id="cust-profile-phone">-</div>
+                    </div>
+                    <div class="row mb-3">
+                      <div class="col-sm-4 font-weight-bold"><i class="mdi mdi-email mr-2 text-primary"></i>Email Address</div>
+                      <div class="col-sm-8 text-muted text-break" id="cust-profile-email">-</div>
+                    </div>
+                    <div class="row mb-3">
+                      <div class="col-sm-4 font-weight-bold"><i class="mdi mdi-account-key mr-2 text-primary"></i>Login Username</div>
+                      <div class="col-sm-8 text-muted" id="cust-profile-username">-</div>
+                    </div>
+                    <div class="row mb-3">
+                      <div class="col-sm-4 font-weight-bold"><i class="mdi mdi-calendar-text mr-2 text-primary"></i>Member Since</div>
+                      <div class="col-sm-8 text-muted" id="cust-profile-created">-</div>
+                    </div>
+                    <div class="row">
+                      <div class="col-sm-4 font-weight-bold"><i class="mdi mdi-map-marker mr-2 text-primary"></i>Residential Address</div>
+                      <div class="col-sm-8 text-muted" id="cust-profile-address" style="line-height: 1.4;">-</div>
+                    </div>
+                  </div>
+
+                  <div class="alert alert-info py-3 mb-0" role="alert">
+                    <h5 class="alert-heading font-weight-bold mb-2"><i class="mdi mdi-lock-outline mr-2"></i>Read-Only Access</h5>
+                    <p class="mb-0 text-small" style="line-height:1.4;">
+                      Your profile information is managed by the system administrator. If you require changes to your contact numbers, address, or password, please submit a request to your dedicated loan manager.
+                    </p>
+                  </div>
+
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+        <!-- content-wrapper ends -->
+        <footer class="footer" id="footer"></footer>
+{% endblock %}

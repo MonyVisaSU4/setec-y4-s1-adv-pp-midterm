@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Loan Management System</title>
+    {% include "partials/style-shop.html" %}
+</head>
+<body>
+<div class="d-flex flex-column position-relative">
+    {% include "partials/navbar.html" %}
+    <div class="d-flex position-relative">
+        <div>{% include "partials/sidebar-left.html" %}</div>
+        <div class="container-fluid main-panel" style="margin: 5% 0 0 15%;">
+            {# Dynamic Content #}{% block contents %}{% endblock %}</div>
+    </div>
+</div>
+
+{% include "partials/jsshop.html" %}
+</body>
+</html>

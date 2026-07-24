@@ -1,0 +1,53 @@
+<script>
+    const handle_filter_and_search = () => {
+        const input = document.getElementById('input-filter-search');
+
+        input.addEventListener('keyup', function (){
+            const query = input.value;
+            fetch(`{{ url_for('admin.borrower') }}?filter=${encodeURIComponent(query)}`)
+                .then(res => res.json())
+                .then(data => {
+                    const tbody = document.getElementById('customers-table-body');
+                    if(data && data.length > 0){
+                        tbody.innerHTML = data.map(l => `
+                            <tr>
+                                <td class="font-weight-bold">
+                                    <i class="mdi mdi-account-circle mr-2 text-primary"
+                                       style="font-size:1.2rem;"></i>
+                                    ${l.name}
+                                </td>
+                                <td><code>${l.nationality}</code></td>
+                                <td>${l.phone}</td>
+                                <td>${l.email}</td>
+                                <td>${l.create_at}</td>
+                                <td>
+                                    <a href="{{ url_for('admin.view_borrower') }}"
+                                       class="btn btn-sm btn-gradient-info btn-icon-text mb-1 mb-md-0"
+                                       title="View details and loans">
+                                        <i class="mdi mdi-eye mr-1"></i> View
+                                    </a>
+                                    <a href="{{ url_for('admin.update_borrower') }}"
+                                       class="btn btn-sm btn-gradient-dark btn-icon-text mb-1 mb-md-0"
+                                       title="Edit Profile">
+                                        <i class="mdi mdi-lead-pencil mr-1"></i> Edit
+                                    </a>
+                                    <button class="btn btn-sm btn-gradient-danger btn-icon-text"
+                                            title="Delete Account"
+                                            onclick="handleSweetAlert(${l.id}, 'borrower')">
+                                        <i class="mdi mdi-delete mr-1"></i> Delete
+                                    </button>
+                                </td>
+                            </tr>
+                        `).join('');
+                    } else{
+                        tbody.innerHTML = `
+                            <tr>
+                                <td colspan="6" class="text-center text-muted py-4">No borrowers found.</td>
+                            </tr>
+                        `;
+                    }
+                })
+        })
+    }
+    handle_filter_and_search();
+</script>

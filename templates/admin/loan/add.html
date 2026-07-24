@@ -1,0 +1,136 @@
+{% extends "layouts/base.html" %}
+
+{% block contents %}
+    <div class="content-wrapper">
+        <!-- Page Header -->
+        <div class="page-header">
+            <h3 class="page-title">
+              <span class="page-title-icon bg-gradient-primary text-white mr-2">
+                <i class="mdi mdi-cash-multiple"></i>
+              </span> Create Loan Agreement
+            </h3>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{{ url_for('admin.loan') }}">Loans</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">Create</li>
+                </ol>
+            </nav>
+        </div>
+
+        <!-- Alert area -->
+        <div id="alert-container" class="alert alert-danger d-none" role="alert"></div>
+
+        <!-- Loan Form & Preview Grid -->
+        <div class="row">
+            <!-- Form Input Card (Left, col-md-6) -->
+            <div class="col-md-6 grid-margin stretch-card">
+                <div class="card">
+                    <div class="card-body">
+                        <h4 class="card-title">Loan Parameters</h4>
+                        <p class="card-description"> Enter the financial parameters for the loan. </p>
+
+                        <form class="forms-sample" id="createLoanForm">
+                            <div class="form-group">
+                                <label for="customer_id" class="font-weight-bold">Select Borrower</label>
+                                <select class="form-control" id="customer_id" required>
+                                    <option value="" disabled selected>-- Select Borrower --</option>
+                                    <!-- Dynamic options -->
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="amount" class="font-weight-bold">Principal Loan Amount ($)</label>
+                                <div class="input-group">
+                                    <div class="input-group-prepend">
+                                        <span class="input-group-text">$</span>
+                                    </div>
+                                    <input type="number" class="form-control" id="amount" placeholder="e.g. 10000"
+                                           min="100" required>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="interest_rate" class="font-weight-bold">Annual Interest Rate (%) <small
+                                        class="text-muted">(Flat Rate)</small></label>
+                                <div class="input-group">
+                                    <input type="number" class="form-control" id="interest_rate" placeholder="e.g. 5"
+                                           min="0" max="100" step="0.01" required>
+                                    <div class="input-group-append">
+                                        <span class="input-group-text">%</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="tenure_months" class="font-weight-bold">Tenure (Months)</label>
+                                <input type="number" class="form-control" id="tenure_months" placeholder="e.g. 12"
+                                       min="1" max="120" required>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="start_date" class="font-weight-bold">Start Date</label>
+                                <input type="date" class="form-control" id="start_date" required>
+                            </div>
+
+                            <button type="submit" class="btn btn-gradient-primary mr-2 mt-2">Generate Loan Agreement
+                            </button>
+                            <a href="admin_loans.html" class="btn btn-light mt-2">Cancel</a>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Real-time Calculator & Installment Preview Card (Right, col-md-6) -->
+            <div class="col-md-6 grid-margin stretch-card">
+                <div class="card">
+                    <div class="card-body">
+                        <h4 class="card-title text-primary"><i class="mdi mdi-calculator mr-2"></i>Real-time EMI
+                            Calculations</h4>
+
+                        <!-- Calculations results -->
+                        <div class="row text-dark mb-4 py-3 bg-light rounded" style="border: 1px solid #e1e2e3;">
+                            <div class="col-6 text-center border-right">
+                                <p class="mb-1 text-muted text-small">Monthly Installment (EMI)</p>
+                                <h3 class="font-weight-bold text-primary mb-0" id="calc-emi">$0.00</h3>
+                            </div>
+                            <div class="col-6 text-center">
+                                <p class="mb-1 text-muted text-small">Total Repayable</p>
+                                <h3 class="font-weight-bold text-success mb-0" id="calc-total">$0.00</h3>
+                            </div>
+                            <div class="col-12 mt-3 pt-3 border-top text-center">
+                                <p class="mb-1 text-muted text-small">Total Flat Interest Payable</p>
+                                <h4 class="font-weight-bold text-warning mb-0" id="calc-interest">$0.00</h4>
+                            </div>
+                        </div>
+
+                        <h5 class="card-title text-small"><i class="mdi mdi-calendar-clock mr-1"></i>Repayment
+                            Installments Schedule Preview</h5>
+                        <div class="table-responsive"
+                             style="max-height: 250px; overflow-y: auto; border: 1px solid #ebedf2;">
+                            <table class="table table-striped table-sm text-center">
+                                <thead>
+                                <tr>
+                                    <th>Inst #</th>
+                                    <th>Due Date</th>
+                                    <th>Amount Due</th>
+                                </tr>
+                                </thead>
+                                <tbody id="preview-schedule-body">
+                                <tr>
+                                    <td colspan="3" class="text-muted text-center py-3">Enter parameters on the left to
+                                        generate schedule preview.
+                                    </td>
+                                </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+    <!-- content-wrapper ends -->
+    <footer class="footer" id="footer"></footer>
+{% endblock %}
