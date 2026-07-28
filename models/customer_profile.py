@@ -16,10 +16,10 @@ class CustomerProfile(db.Model):
     user_id: Mapped[int] = mapped_column(
         Integer, ForeignKey("users.user_id"), nullable=False
     )
-    user: Mapped["User"] = relationship("User", back_populates="CustomerProfile")
+    user: Mapped["User"] = relationship("User", back_populates="customer_profiles")
 
-    loan: Mapped[list["CustomerProfile"]] = relationship(
-        "Loan", back_populates="CustomerProfile"
+    loans: Mapped[list["Loan"]] = relationship(
+        "Loan", back_populates="customer_profile"
     )
 
     phone: Mapped[str] = mapped_column(String(11), nullable=False)

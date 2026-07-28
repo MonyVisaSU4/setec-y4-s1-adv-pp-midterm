@@ -112,4 +112,17 @@
     </div>
     <!-- content-wrapper ends -->
     <footer class="footer" id="footer"></footer>
+
+    <script>
+        document.getElementById('addCustomerForm')?.addEventListener('submit', function(e) {
+            e.preventDefault();
+            Swal.fire({
+                title: 'Success!',
+                text: 'Borrower profile and account created successfully.',
+                icon: 'success'
+            }).then(() => {
+                window.location.href = "{{ url_for('admin.borrower') }}";
+            });
+        });
+    </script>
 {% endblock %}

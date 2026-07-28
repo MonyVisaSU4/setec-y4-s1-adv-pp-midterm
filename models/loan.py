@@ -21,8 +21,8 @@ class Loan(db.Model):
     customer_id: Mapped[int] = mapped_column(
         Integer, ForeignKey("customer_profiles.customer_id"), nullable=False
     )
-    customer_profiles: Mapped["CustomerProfile"] = relationship(
-        "CustomerProfile", back_populates="Loan"
+    customer_profile: Mapped["CustomerProfile"] = relationship(
+        "CustomerProfile", back_populates="loans"
     )
 
     amount: Mapped[float] = mapped_column(Float, nullable=False)

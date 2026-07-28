@@ -16,10 +16,22 @@ def dashboard():
         }
     ]
 
-    if 'admin' not in session['role']:
+    stat_data = {
+        'customers': 12,
+        'active_loans': 5,
+        'total_disbursed': 45000.00,
+        'total_collected': 18500.00,
+        'monthly_labels': ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul"],
+        'monthly_disbursed': [5000, 8000, 12000, 6000, 9000, 15000, 10000],
+        'monthly_collected': [3000, 4500, 7500, 5000, 7000, 12000, 8500],
+        'status_counts': {'Pending': 3, 'Active': 5, 'Closed': 4}
+    }
+
+    if 'admin' not in session.get('role', ''):
         return redirect(url_for('root'))
     return render_template("admin/dashboard.html",
-                           overdue_loan=overdue_loan)
+                           overdue_loan=overdue_loan,
+                           stat_data=stat_data)
 
 
 @admin.route("/admin/borrower", methods=['GET'])

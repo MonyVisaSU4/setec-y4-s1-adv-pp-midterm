@@ -119,4 +119,99 @@
     </div>
     <!-- content-wrapper ends -->
     <footer class="footer" id="footer"></footer>
+
+    <script>
+        const loanData = {
+            id: "LOAN_884",
+            borrower: "Touch Sovannita",
+            principal: 12000.00,
+            rate: 8.0,
+            tenure: 6,
+            start_date: "2026-07-19",
+            status: "active",
+            total_payable: 12480.00,
+            collected: 4160.00,
+            outstanding: 8320.00,
+            schedule: [
+                { inst: 1, due: "2026-08-19", due_amount: 2080.00, paid_amount: 2080.00, status: "paid", paid_date: "2026-08-15" },
+                { inst: 2, due: "2026-09-19", due_amount: 2080.00, paid_amount: 2080.00, status: "paid", paid_date: "2026-09-18" },
+                { inst: 3, due: "2026-10-19", due_amount: 2080.00, paid_amount: 0.00, status: "overdue", paid_date: "-" },
+                { inst: 4, due: "2026-11-19", due_amount: 2080.00, paid_amount: 0.00, status: "pending", paid_date: "-" },
+                { inst: 5, due: "2026-12-19", due_amount: 2080.00, paid_amount: 0.00, status: "pending", paid_date: "-" },
+                { inst: 6, due: "2027-01-19", due_amount: 2080.00, paid_amount: 0.00, status: "pending", paid_date: "-" }
+            ]
+        };
+
+        document.addEventListener("DOMContentLoaded", function () {
+            if (document.getElementById('loan-id')) document.getElementById('loan-id').textContent = loanData.id;
+            if (document.getElementById('loan-borrower')) {
+                document.getElementById('loan-borrower').textContent = loanData.borrower;
+                document.getElementById('loan-borrower').href = "{{ url_for('admin.view_borrower') }}";
+            }
+            if (document.getElementById('loan-principal')) document.getElementById('loan-principal').textContent = '$' + loanData.principal.toFixed(2);
+            if (document.getElementById('loan-rate')) document.getElementById('loan-rate').textContent = loanData.rate + '%';
+            if (document.getElementById('loan-tenure')) document.getElementById('loan-tenure').textContent = loanData.tenure + ' Months';
+            if (document.getElementById('loan-start')) document.getElementById('loan-start').textContent = loanData.start_date;
+            if (document.getElementById('loan-payable')) document.getElementById('loan-payable').textContent = '$' + loanData.total_payable.toFixed(2);
+            if (document.getElementById('loan-collected')) document.getElementById('loan-collected').textContent = '$' + loanData.collected.toFixed(2);
+            if (document.getElementById('loan-outstanding')) document.getElementById('loan-outstanding').textContent = '$' + loanData.outstanding.toFixed(2);
+
+            const badge = document.getElementById('loan-status-badge');
+            if (badge) {
+                badge.textContent = loanData.status.toUpperCase();
+                badge.className = `badge badge-${loanData.status === 'active' ? 'success' : loanData.status === 'pending' ? 'warning' : 'secondary'} font-weight-bold`;
+            }
+
+            if (loanData.status === 'pending' && document.getElementById('pending-actions')) {
+                document.getElementById('pending-actions').classList.remove('d-none');
+            }
+
+            const tbody = document.getElementById('schedule-table-body');
+            if (tbody) {
+                tbody.innerHTML = loanData.schedule.map(s => {
+                    let badgeClass = 'badge-secondary';
+                    if (s.status === 'paid') badgeClass = 'badge-success';
+                    else if (s.status === 'overdue') badgeClass = 'badge-danger';
+                    else if (s.status === 'pending') badgeClass = 'badge-warning';
+
+                    return `
+                        <tr>
+                            <td>${s.inst}</td>
+                            <td>${s.due}</td>
+                            <td class="font-weight-bold">$${s.due_amount.toFixed(2)}</td>
+                            <td>$${s.paid_amount.toFixed(2)}</td>
+                            <td><span class="badge ${badgeClass}">${s.status.toUpperCase()}</span></td>
+                            <td>${s.paid_date}</td>
+                            <td>
+                                ${s.status !== 'paid' ? `<button class="btn btn-sm btn-gradient-warning" onclick="repayInst(${s.inst})">Repay</button>` : `<i class="mdi mdi-check text-success"></i>`}
+                            </td>
+                        </tr>
+                    `;
+                }).join('');
+            }
+        });
+
+        function activateLoan() {
+            Swal.fire('Approved!', 'Loan has been activated.', 'success').then(() => location.reload());
+        }
+
+        function deleteLoan() {
+            Swal.fire({
+                title: 'Are you sure?',
+                text: 'Delete this pending loan proposal?',
+                icon: 'warning',
+                showCancelButton: true
+            }).then(res => {
+                if (res.isConfirmed) {
+                    Swal.fire('Deleted!', 'Loan proposal deleted.', 'success').then(() => {
+                        window.location.href = "{{ url_for('admin.loan') }}";
+                    });
+                }
+            });
+        }
+
+        function repayInst(inst) {
+            Swal.fire('Payment Recorded', `Installment #${inst} marked as paid.`, 'success');
+        }
+    </script>
 {% endblock %}

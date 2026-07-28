@@ -82,7 +82,9 @@
                             <div id="visit-sale-legend"
                                  class="rounded-legend legend-horizontal legend-top-right float-right"></div>
                         </div>
-                        <canvas id="disbursementChart" class="mt-4" style="height:250px"></canvas>
+                        <div style="position: relative; height: 200px; width: 100%;">
+                            <canvas id="disbursementChart"></canvas>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -91,7 +93,9 @@
                 <div class="card">
                     <div class="card-body">
                         <h4 class="card-title">Loan Status Distribution</h4>
-                        <canvas id="statusPieChart" class="mt-4" style="height:250px"></canvas>
+                        <div style="position: relative; height: 200px; width: 100%;">
+                            <canvas id="statusPieChart"></canvas>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -156,4 +160,81 @@
     </div>
     <!-- content-wrapper ends -->
     <footer class="footer" id="footer"></footer>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const statData = {{ stat_data | tojson if stat_data else '{}' }};
+
+            if (statData) {
+                if (document.getElementById('stat-customers'))
+                    document.getElementById('stat-customers').textContent = statData.customers || 0;
+                if (document.getElementById('stat-active-loans'))
+                    document.getElementById('stat-active-loans').textContent = statData.active_loans || 0;
+                if (document.getElementById('stat-disbursed'))
+                    document.getElementById('stat-disbursed').textContent = '$' + (statData.total_disbursed || 0).toLocaleString('en-US', {minimumFractionDigits: 2});
+                if (document.getElementById('stat-collected'))
+                    document.getElementById('stat-collected').textContent = '$' + (statData.total_collected || 0).toLocaleString('en-US', {minimumFractionDigits: 2});
+            }
+
+            const ctxBar = document.getElementById('disbursementChart');
+            if (ctxBar && typeof Chart !== 'undefined') {
+                new Chart(ctxBar, {
+                    type: 'bar',
+                    data: {
+                        labels: statData.monthly_labels || ["Jan", "Feb", "Mar", "Apr", "May", "Jun"],
+                        datasets: [
+                            {
+                                label: 'Disbursed ($)',
+                                data: statData.monthly_disbursed || [],
+                                backgroundColor: 'rgba(154, 85, 255, 0.8)',
+                                borderRadius: 4
+                            },
+                            {
+                                label: 'Collected ($)',
+                                data: statData.monthly_collected || [],
+                                backgroundColor: 'rgba(54, 162, 235, 0.8)',
+                                borderRadius: 4
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { position: 'top' }
+                        },
+                        scales: {
+                            y: { beginAtZero: true }
+                        }
+                    }
+                });
+            }
+
+            const ctxPie = document.getElementById('statusPieChart');
+            if (ctxPie && typeof Chart !== 'undefined') {
+                const statusCounts = statData.status_counts || { Pending: 3, Active: 5, Closed: 4 };
+                new Chart(ctxPie, {
+                    type: 'doughnut',
+                    data: {
+                        labels: Object.keys(statusCounts),
+                        datasets: [{
+                            data: Object.values(statusCounts),
+                            backgroundColor: [
+                                '#ffc107',
+                                '#28a745',
+                                '#6c757d'
+                            ]
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { position: 'bottom' }
+                        }
+                    }
+                });
+            }
+        });
+    </script>
 {% endblock %}

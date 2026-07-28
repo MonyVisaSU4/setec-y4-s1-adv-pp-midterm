@@ -107,4 +107,26 @@
     </div>
     <!-- content-wrapper ends -->
     <footer class="footer" id="footer"></footer>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            if (document.getElementById('name')) document.getElementById('name').value = "Touch Sovannita";
+            if (document.getElementById('national_id')) document.getElementById('national_id').value = "NID-99201";
+            if (document.getElementById('phone')) document.getElementById('phone').value = "0973003645";
+            if (document.getElementById('email')) document.getElementById('email').value = "visazin128@gmail.com";
+            if (document.getElementById('address')) document.getElementById('address').value = "Phnom Penh, Cambodia";
+            if (document.getElementById('username')) document.getElementById('username').value = "sovannita";
+
+            document.getElementById('editCustomerForm')?.addEventListener('submit', function(e) {
+                e.preventDefault();
+                Swal.fire({
+                    title: 'Updated!',
+                    text: 'Borrower profile updated successfully.',
+                    icon: 'success'
+                }).then(() => {
+                    window.location.href = "{{ url_for('admin.borrower') }}";
+                });
+            });
+        });
+    </script>
 {% endblock %}

@@ -133,4 +133,88 @@
     </div>
     <!-- content-wrapper ends -->
     <footer class="footer" id="footer"></footer>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const customerSelect = document.getElementById('customer_id');
+            const amountInput = document.getElementById('amount');
+            const rateInput = document.getElementById('interest_rate');
+            const tenureInput = document.getElementById('tenure_months');
+            const startDateInput = document.getElementById('start_date');
+
+            const customers = [
+                { id: 1, name: "Touch Sovannita" },
+                { id: 2, name: "Mony Visa" },
+                { id: 3, name: "Hak Korlimhuor" }
+            ];
+
+            if (customerSelect) {
+                customerSelect.innerHTML = '<option value="" disabled selected>-- Select Borrower --</option>' +
+                    customers.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+            }
+
+            // Set default date to today
+            if (startDateInput) {
+                const today = new Date().toISOString().split('T')[0];
+                startDateInput.value = today;
+            }
+
+            function updateCalculations() {
+                const amount = parseFloat(amountInput.value) || 0;
+                const rate = parseFloat(rateInput.value) || 0;
+                const tenure = parseInt(tenureInput.value) || 0;
+                const startDateStr = startDateInput.value;
+
+                if (amount > 0 && tenure > 0) {
+                    const totalInterest = amount * (rate / 100) * (tenure / 12);
+                    const totalRepayable = amount + totalInterest;
+                    const emi = totalRepayable / tenure;
+
+                    document.getElementById('calc-emi').textContent = '$' + emi.toFixed(2);
+                    document.getElementById('calc-total').textContent = '$' + totalRepayable.toFixed(2);
+                    document.getElementById('calc-interest').textContent = '$' + totalInterest.toFixed(2);
+
+                    const tbody = document.getElementById('preview-schedule-body');
+                    if (tbody && startDateStr) {
+                        let html = '';
+                        let baseDate = new Date(startDateStr);
+                        for (let i = 1; i <= tenure; i++) {
+                            let dueDate = new Date(baseDate);
+                            dueDate.setMonth(dueDate.getMonth() + i);
+                            const dateFormatted = dueDate.toISOString().split('T')[0];
+                            html += `<tr>
+                                <td>${i}</td>
+                                <td>${dateFormatted}</td>
+                                <td>$${emi.toFixed(2)}</td>
+                            </tr>`;
+                        }
+                        tbody.innerHTML = html;
+                    }
+                } else {
+                    document.getElementById('calc-emi').textContent = '$0.00';
+                    document.getElementById('calc-total').textContent = '$0.00';
+                    document.getElementById('calc-interest').textContent = '$0.00';
+                    document.getElementById('preview-schedule-body').innerHTML = `
+                        <tr>
+                            <td colspan="3" class="text-muted text-center py-3">Enter parameters on the left to generate schedule preview.</td>
+                        </tr>`;
+                }
+            }
+
+            [amountInput, rateInput, tenureInput, startDateInput].forEach(el => {
+                if (el) el.addEventListener('input', updateCalculations);
+            });
+
+            document.getElementById('createLoanForm')?.addEventListener('submit', function (e) {
+                e.preventDefault();
+                Swal.fire({
+                    title: 'Success!',
+                    text: 'Loan Agreement created successfully.',
+                    icon: 'success'
+                }).then(() => {
+                    window.location.href = "{{ url_for('admin.loan') }}";
+                });
+            });
+        });
+    </script>
 {% endblock %}

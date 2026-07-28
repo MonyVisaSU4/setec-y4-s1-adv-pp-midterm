@@ -100,4 +100,57 @@
         </div>
         <!-- content-wrapper ends -->
         <footer class="footer" id="footer"></footer>
+
+    <script>
+        const custSchedule = {
+            id: "LOAN_884",
+            principal: 12000.00,
+            rate: 5.0,
+            tenure: 6,
+            start_date: "2026-04-09",
+            status: "active",
+            total_payable: 12600.00,
+            collected: 6300.00,
+            outstanding: 6300.00,
+            schedule: [
+                { inst: 1, due: "2026-05-09", due_amount: 2100.00, paid_amount: 2100.00, status: "paid", paid_date: "2026-05-08" },
+                { inst: 2, due: "2026-06-09", due_amount: 2100.00, paid_amount: 2100.00, status: "paid", paid_date: "2026-06-07" },
+                { inst: 3, due: "2026-07-09", due_amount: 2100.00, paid_amount: 2100.00, status: "paid", paid_date: "2026-07-09" },
+                { inst: 4, due: "2026-08-09", due_amount: 2100.00, paid_amount: 0.00, status: "pending", paid_date: "-" },
+                { inst: 5, due: "2026-09-09", due_amount: 2100.00, paid_amount: 0.00, status: "pending", paid_date: "-" },
+                { inst: 6, due: "2026-10-09", due_amount: 2100.00, paid_amount: 0.00, status: "pending", paid_date: "-" }
+            ]
+        };
+
+        document.addEventListener("DOMContentLoaded", function() {
+            if (document.getElementById('loan-id')) document.getElementById('loan-id').textContent = custSchedule.id;
+            if (document.getElementById('loan-principal')) document.getElementById('loan-principal').textContent = '$' + custSchedule.principal.toFixed(2);
+            if (document.getElementById('loan-rate')) document.getElementById('loan-rate').textContent = custSchedule.rate + '%';
+            if (document.getElementById('loan-tenure')) document.getElementById('loan-tenure').textContent = custSchedule.tenure + ' Months';
+            if (document.getElementById('loan-start')) document.getElementById('loan-start').textContent = custSchedule.start_date;
+            if (document.getElementById('loan-payable')) document.getElementById('loan-payable').textContent = '$' + custSchedule.total_payable.toFixed(2);
+            if (document.getElementById('loan-collected')) document.getElementById('loan-collected').textContent = '$' + custSchedule.collected.toFixed(2);
+            if (document.getElementById('loan-outstanding')) document.getElementById('loan-outstanding').textContent = '$' + custSchedule.outstanding.toFixed(2);
+
+            const badge = document.getElementById('loan-status-badge');
+            if (badge) {
+                badge.textContent = custSchedule.status.toUpperCase();
+                badge.className = `badge badge-${custSchedule.status === 'active' ? 'success' : 'warning'} font-weight-bold`;
+            }
+
+            const tbody = document.getElementById('schedule-table-body');
+            if (tbody) {
+                tbody.innerHTML = custSchedule.schedule.map(s => `
+                    <tr>
+                        <td>${s.inst}</td>
+                        <td>${s.due}</td>
+                        <td class="font-weight-bold">$${s.due_amount.toFixed(2)}</td>
+                        <td class="text-success font-weight-bold">$${s.paid_amount.toFixed(2)}</td>
+                        <td><span class="badge badge-${s.status === 'paid' ? 'success' : 'warning'}">${s.status.toUpperCase()}</span></td>
+                        <td>${s.paid_date}</td>
+                    </tr>
+                `).join('');
+            }
+        });
+    </script>
 {% endblock %}

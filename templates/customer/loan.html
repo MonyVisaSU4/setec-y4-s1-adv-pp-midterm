@@ -75,4 +75,41 @@
         </div>
         <!-- content-wrapper ends -->
         <footer class="footer" id="footer"></footer>
+
+    <script>
+        const myLoans = [
+            { id: 'LOAN_884', principal: 12000.00, rate: 5, duration: 12, total: 12600.00, paid: 6000.00, status: 'Active', start: '2026-04-09' },
+            { id: 'LOAN_882', principal: 5000.00, rate: 8, duration: 6, total: 5200.00, paid: 5200.00, status: 'Closed', start: '2026-01-10' }
+        ];
+
+        function applyFilter() {
+            const filter = document.getElementById('cust-filter-status').value;
+            const tbody = document.getElementById('cust-loans-table-body');
+            const filtered = myLoans.filter(l => filter === 'All' || l.status.toLowerCase() === filter.toLowerCase());
+
+            if (filtered.length > 0) {
+                tbody.innerHTML = filtered.map(l => `
+                    <tr>
+                        <td><code>${l.id}</code></td>
+                        <td class="font-weight-bold">$${l.principal.toFixed(2)}</td>
+                        <td>${l.rate}%</td>
+                        <td>${l.duration} mo</td>
+                        <td class="font-weight-bold text-dark">$${l.total.toFixed(2)}</td>
+                        <td class="text-success font-weight-bold">$${l.paid.toFixed(2)}</td>
+                        <td><span class="badge badge-${l.status === 'Active' ? 'success' : l.status === 'Pending' ? 'warning' : 'secondary'}">${l.status}</span></td>
+                        <td>${l.start}</td>
+                        <td>
+                            <a href="{{ url_for('customer.schedule') }}" class="btn btn-sm btn-gradient-info">
+                                <i class="mdi mdi-eye mr-1"></i>View Schedule
+                            </a>
+                        </td>
+                    </tr>
+                `).join('');
+            } else {
+                tbody.innerHTML = `<tr><td colspan="9" class="text-center text-muted py-4">No loans match the filter.</td></tr>`;
+            }
+        }
+
+        document.addEventListener("DOMContentLoaded", applyFilter);
+    </script>
 {% endblock %}

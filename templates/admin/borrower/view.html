@@ -107,4 +107,51 @@
     </div>
     <!-- content-wrapper ends -->
     <footer class="footer" id="footer"></footer>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            const profile = {
+                name: "Touch Sovannita",
+                nid: "NID-99201",
+                phone: "0973003645",
+                email: "visazin128@gmail.com",
+                username: "sovannita",
+                created: "2026-07-19",
+                address: "Phnom Penh, Cambodia"
+            };
+            const loans = [
+                { id: "882", principal: 5000, rate: 8, tenure: 9, total: 5200, status: "pending", start: "2026-07-18" },
+                { id: "884", principal: 12000, rate: 8, tenure: 3, total: 12200, status: "active", start: "2026-07-19" }
+            ];
+
+            if (document.getElementById('profile-name')) document.getElementById('profile-name').textContent = profile.name;
+            if (document.getElementById('profile-nid')) document.getElementById('profile-nid').textContent = profile.nid;
+            if (document.getElementById('profile-phone')) document.getElementById('profile-phone').textContent = profile.phone;
+            if (document.getElementById('profile-email')) document.getElementById('profile-email').textContent = profile.email;
+            if (document.getElementById('profile-username')) document.getElementById('profile-username').textContent = profile.username;
+            if (document.getElementById('profile-created')) document.getElementById('profile-created').textContent = profile.created;
+            if (document.getElementById('profile-address')) document.getElementById('profile-address').textContent = profile.address;
+
+            if (document.getElementById('btn-edit-profile')) document.getElementById('btn-edit-profile').href = "{{ url_for('admin.update_borrower') }}";
+            if (document.getElementById('btn-create-loan')) document.getElementById('btn-create-loan').href = "{{ url_for('admin.add_loan') }}";
+
+            const tbody = document.getElementById('loans-table-body');
+            if (tbody) {
+                tbody.innerHTML = loans.map(l => `
+                    <tr>
+                        <td><code>#${l.id}</code></td>
+                        <td>$${l.principal.toFixed(2)}</td>
+                        <td>${l.rate}%</td>
+                        <td>${l.tenure} mo</td>
+                        <td>$${l.total.toFixed(2)}</td>
+                        <td><span class="badge badge-${l.status === 'active' ? 'success' : 'warning'}">${l.status}</span></td>
+                        <td>${l.start}</td>
+                        <td>
+                            <a href="{{ url_for('admin.view_loan') }}" class="btn btn-sm btn-gradient-info"><i class="mdi mdi-eye"></i> Details</a>
+                        </td>
+                    </tr>
+                `).join('');
+            }
+        });
+    </script>
 {% endblock %}

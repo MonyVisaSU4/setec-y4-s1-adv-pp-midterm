@@ -23,7 +23,7 @@ class User(db.Model):
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.now())
 
     customer_profiles: Mapped["CustomerProfile"] = relationship(
-        "CustomerProfile", back_populates="User"
+        "CustomerProfile", back_populates="user"
     )
 
     def set_password(self, password):

@@ -27,7 +27,7 @@
                 <div class="card-body">
                   <!-- Header profile face -->
                   <div class="text-center pb-4 border-bottom">
-                    <img id="cust-profile-avatar" src="assets/images/faces/face2.jpg" alt="profile" class="img-lg rounded-circle mb-3" style="width:100px; height:100px; object-fit:cover;">
+                    <img id="cust-profile-avatar" src="{{ url_for('static', filename='assets/images/faces/face2.jpg') }}" alt="profile" class="img-lg rounded-circle mb-3" style="width:100px; height:100px; object-fit:cover;">
                     <h3 class="font-weight-bold mb-1" id="cust-profile-name">John Doe</h3>
                     <p class="text-success font-weight-bold" id="cust-profile-id">ID: CUST_1</p>
                   </div>
@@ -74,4 +74,28 @@
         </div>
         <!-- content-wrapper ends -->
         <footer class="footer" id="footer"></footer>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            const custData = {
+                name: "Touch Sovannita",
+                id: "CUST_882",
+                nid: "NID-99201",
+                phone: "0973003645",
+                email: "sovannita128@gmail.com",
+                username: "sota",
+                created: "2026-07-19",
+                address: "Phnom Penh, Cambodia"
+            };
+
+            if (document.getElementById('cust-profile-name')) document.getElementById('cust-profile-name').textContent = custData.name;
+            if (document.getElementById('cust-profile-id')) document.getElementById('cust-profile-id').textContent = "ID: " + custData.id;
+            if (document.getElementById('cust-profile-nid')) document.getElementById('cust-profile-nid').textContent = custData.nid;
+            if (document.getElementById('cust-profile-phone')) document.getElementById('cust-profile-phone').textContent = custData.phone;
+            if (document.getElementById('cust-profile-email')) document.getElementById('cust-profile-email').textContent = custData.email;
+            if (document.getElementById('cust-profile-username')) document.getElementById('cust-profile-username').textContent = custData.username;
+            if (document.getElementById('cust-profile-created')) document.getElementById('cust-profile-created').textContent = custData.created;
+            if (document.getElementById('cust-profile-address')) document.getElementById('cust-profile-address').textContent = custData.address;
+        });
+    </script>
 {% endblock %}

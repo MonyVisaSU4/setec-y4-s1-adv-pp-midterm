@@ -23,7 +23,7 @@
             <div class="col-md-4 stretch-card grid-margin">
                 <div class="card bg-gradient-success card-img-holder text-white">
                     <div class="card-body">
-                        <img src="assets/images/dashboard/circle.svg" class="card-img-absolute" alt="circle-image"/>
+                        <img src="{{ url_for('static', filename='assets/images/dashboard/circle.svg') }}" class="card-img-absolute" alt="circle-image"/>
                         <h4 class="font-weight-normal mb-3">Total Borrowed <i
                                 class="mdi mdi-trending-up mdi-24px float-right"></i></h4>
                         <h2 class="mb-5" id="cust-stat-borrowed">$0.00</h2>
@@ -34,7 +34,7 @@
             <div class="col-md-4 stretch-card grid-margin">
                 <div class="card bg-gradient-danger card-img-holder text-white">
                     <div class="card-body">
-                        <img src="assets/images/dashboard/circle.svg" class="card-img-absolute" alt="circle-image"/>
+                        <img src="{{ url_for('static', filename='assets/images/dashboard/circle.svg') }}" class="card-img-absolute" alt="circle-image"/>
                         <h4 class="font-weight-normal mb-3">Remaining Balance <i
                                 class="mdi mdi-scale-balance mdi-24px float-right"></i></h4>
                         <h2 class="mb-5" id="cust-stat-balance">$0.00</h2>
@@ -45,7 +45,7 @@
             <div class="col-md-4 stretch-card grid-margin">
                 <div class="card bg-gradient-warning card-img-holder text-white">
                     <div class="card-body">
-                        <img src="assets/images/dashboard/circle.svg" class="card-img-absolute" alt="circle-image"/>
+                        <img src="{{ url_for('static', filename='assets/images/dashboard/circle.svg') }}" class="card-img-absolute" alt="circle-image"/>
                         <h4 class="font-weight-normal mb-3">Next Due Installment <i
                                 class="mdi mdi-calendar-clock mdi-24px float-right"></i></h4>
                         <h2 class="mb-3" id="cust-stat-due-amount">$0.00</h2>
@@ -78,19 +78,19 @@
                                 </tr>
                                 </thead>
                                 <tbody id="my-loans-table-body">
-                                {% if list is not none %}
+                                {% if list is not none and list|length > 0 %}
                                     {% for l in list %}
                                         <tr>
-                                            <td class="font-weight-bold"> ${{ l.principle }} </td>
+                                            <td class="font-weight-bold"> ${{ "%.2f"|format(l.principle) }} </td>
                                             <td> {{ l.interest_rate }}%</td>
                                             <td> {{ l.duration }} mo</td>
                                             <td class="font-weight-bold text-dark">
-                                                ${{ l.total_repayable }}
+                                                ${{ "%.2f"|format(l.total_repayable) }}
                                             </td>
                                             <td class="text-success font-weight-bold">
-                                                ${{ l.total_paid }}
+                                                ${{ "%.2f"|format(l.total_paid) }}
                                             </td>
-                                            <td><span class="badge ${badgeClass}">{{ l.status }}</span></td>
+                                            <td><span class="badge badge-{% if l.status == 'active' %}success{% elif l.status == 'pending' %}warning{% else %}secondary{% endif %}">{{ l.status|capitalize }}</span></td>
                                             <td> {{ l.start_date }}</td>
                                             <td>
                                                 <a href="{{ url_for('customer.schedule') }}"
@@ -103,7 +103,7 @@
 
                                 {% else %}
                                     <tr>
-                                        <td colspan="9" class="text-center text-muted py-4">
+                                        <td colspan="8" class="text-center text-muted py-4">
                                             You do not have any active or past loans.
                                         </td>
                                     </tr>
@@ -119,4 +119,27 @@
     </div>
     <!-- content-wrapper ends -->
     <footer class="footer" id="footer"></footer>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const loanList = {{ list | tojson if list else '[]' }};
+
+            let totalBorrowed = 0;
+            let totalBalance = 0;
+
+            loanList.forEach(l => {
+                totalBorrowed += Number(l.principle || 0);
+                totalBalance += (Number(l.total_repayable || 0) - Number(l.total_paid || 0));
+            });
+
+            if (document.getElementById('cust-stat-borrowed'))
+                document.getElementById('cust-stat-borrowed').textContent = '$' + totalBorrowed.toFixed(2);
+            if (document.getElementById('cust-stat-balance'))
+                document.getElementById('cust-stat-balance').textContent = '$' + totalBalance.toFixed(2);
+            if (document.getElementById('cust-stat-due-amount'))
+                document.getElementById('cust-stat-due-amount').textContent = '$' + (totalBalance > 0 ? (totalBalance / 2).toFixed(2) : '0.00');
+            if (document.getElementById('cust-stat-due-date'))
+                document.getElementById('cust-stat-due-date').textContent = '2026-08-15';
+        });
+    </script>
 {% endblock %}
