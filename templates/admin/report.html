@@ -10,7 +10,7 @@
               </span> Reports & Audits
             </h3>
             <div class="d-flex align-items-center mt-2 mt-md-0">
-                <button class="btn btn-gradient-success btn-icon-text font-weight-bold" onclick="exportCSV()">
+                <button class="btn btn-gradient-success btn-icon-text font-weight-bold" onclick="">
                     <i class="mdi mdi-file-export mr-2"></i> Export to CSV
                 </button>
             </div>
@@ -25,7 +25,7 @@
                         <div class="row">
                             <div class="col-md-4 form-group">
                                 <label class="font-weight-bold">Status</label>
-                                <select class="form-control" id="rep-status" onchange="runReport()">
+                                <select class="form-control" id="rep-status" onchange="render_report()">
                                     <option value="All">All Statuses</option>
                                     <option value="Pending">Pending</option>
                                     <option value="Active">Active</option>
@@ -34,11 +34,11 @@
                             </div>
                             <div class="col-md-4 form-group">
                                 <label class="font-weight-bold">Start Date From</label>
-                                <input type="date" class="form-control" id="rep-start" onchange="runReport()">
+                                <input type="date" class="form-control" id="rep-start" onchange="render_report()">
                             </div>
                             <div class="col-md-4 form-group">
                                 <label class="font-weight-bold">Start Date To</label>
-                                <input type="date" class="form-control" id="rep-end" onchange="runReport()">
+                                <input type="date" class="form-control" id="rep-end" onchange="render_report()">
                             </div>
                         </div>
                     </div>
@@ -126,4 +126,78 @@
     </div>
     <!-- content-wrapper ends -->
     <footer class="footer" id="footer"></footer>
+
+    <script>
+        const tbody = document.getElementById('report-table-body');
+        const filterStatus = document.getElementById('rep-status');
+        const startDate = document.getElementById('rep-start');
+        const endDate = document.getElementById('rep-end');
+
+        const sumCount = document.getElementById('sum-count');
+        const sumPrincipal = document.getElementById('sum-principal');
+        const sumInterest = document.getElementById('sum-interest');
+        const sumCollected = document.getElementById('sum-collected');
+
+        // Full, unfiltered dataset passed in from the server.
+        const list = {{ list | tojson }};
+
+        function money(n) {
+            return `$${Number(n || 0).toFixed(2)}`;
+        }
+
+        function get_filtered() {
+            const status = filterStatus.value; // "All", "Pending", "Active", "Closed"
+            const start = startDate.value;     // "YYYY-MM-DD" or ""
+            const end = endDate.value;         // "YYYY-MM-DD" or ""
+
+            return list.filter(l => {
+                const statusMatch = (status === 'All') ||
+                    (l.status || '').toLowerCase() === status.toLowerCase();
+
+                const loanTime = new Date(l.start_date).getTime();
+                const startMatch = !start || loanTime >= new Date(start).getTime();
+                const endMatch = !end || loanTime <= new Date(end + 'T23:59:59').getTime();
+
+                return statusMatch && startMatch && endMatch;
+            });
+        }
+
+        function render_report() {
+            const filtered = get_filtered();
+
+            if (filtered.length > 0) {
+                tbody.innerHTML = filtered.map(l => `
+                    <tr>
+                        <td class="font-weight-bold">${l.name}</td>
+                        <td>$${l.principal}</td>
+                        <td>${l.rate}%</td>
+                        <td>${l.tenure} mo</td>
+                        <td class="font-weight-bold text-dark">$${l.total_repayable}</td>
+                        <td><span class="badge badge-pending">${l.status}</span></td>
+                        <td>${l.start_date}</td>
+                    </tr>
+                `).join('');
+            } else {
+                tbody.innerHTML = `<tr>
+                    <td colspan="8" class="text-center text-muted py-4">No loan records match the query.</td>
+                </tr>`;
+            }
+
+            // Update summary boxes.
+            // NOTE: "Expected Interest" assumes total_repayable - principal.
+            // "Collected Repayments" assumes each record may have an optional
+            // l.collected field; adjust the field name if yours differs.
+            const count = filtered.length;
+            const principalSum = filtered.reduce((sum, l) => sum + Number(l.principal || 0), 0);
+            const interestSum = filtered.reduce((sum, l) => sum + (Number(l.total_repayable || 0) - Number(l.principal || 0)), 0);
+            const collectedSum = filtered.reduce((sum, l) => sum + Number(l.collected || 0), 0);
+
+            sumCount.textContent = count;
+            sumPrincipal.textContent = money(principalSum);
+            sumInterest.textContent = money(interestSum);
+            sumCollected.textContent = money(collectedSum);
+        }
+
+        render_report();
+    </script>
 {% endblock %}

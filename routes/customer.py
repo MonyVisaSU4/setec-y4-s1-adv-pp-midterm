@@ -22,18 +22,18 @@ def dashboard():
 
 @customer.route("/customer/loan", methods=['GET'])
 def loan():
-    if session.get('user') is None:
+    if 'customer' not in session['role']:
         return redirect(url_for('root'))
     return render_template("customer/loan.html")
 
 @customer.route("/customer/profile", methods=['GET'])
 def profile():
-    if session.get('user') is None:
+    if 'customer' not in session['role']:
         return redirect(url_for('root'))
     return render_template("customer/profile.html")
 
 @customer.route("/customer/loan/schedule", methods=['GET'])
 def schedule():
-    if session.get('user') is None:
+    if 'customer' not in session['role']:
         return redirect(url_for('root'))
     return render_template("customer/schedule.html")

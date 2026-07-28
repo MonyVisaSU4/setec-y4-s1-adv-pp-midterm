@@ -25,29 +25,29 @@
                 <div class="card">
                     <div class="card-body">
                         <h4 class="card-title">Filter Loans</h4>
-                        <form id="filter-form" onsubmit="event.preventDefault(); applyFilters();">
+                        <div id="filter-form">
                             <div class="row">
                                 <div class="col-md-4 form-group">
                                     <label for="filter-status" class="font-weight-bold">Status</label>
-                                    <select class="form-control" id="filter-status" onchange="applyFilters()">
-                                        <option value="All">All Statuses</option>
-                                        <option value="Pending">Pending</option>
-                                        <option value="Active">Active</option>
-                                        <option value="Closed">Closed</option>
+                                    <select class="form-control" id="filter-status" onchange="render_loan()">
+                                        <option value="all">All Statuses</option>
+                                        <option value="pending">Pending</option>
+                                        <option value="active">Active</option>
+                                        <option value="closed">Closed</option>
                                     </select>
                                 </div>
                                 <div class="col-md-4 form-group">
                                     <label for="filter-start-date" class="font-weight-bold">Start Date From</label>
                                     <input type="date" class="form-control" id="filter-start-date"
-                                           onchange="applyFilters()">
+                                           onchange="render_loan()">
                                 </div>
                                 <div class="col-md-4 form-group">
                                     <label for="filter-end-date" class="font-weight-bold">Start Date To</label>
                                     <input type="date" class="form-control" id="filter-end-date"
-                                           onchange="applyFilters()">
+                                           onchange="render_loan()">
                                 </div>
                             </div>
-                        </form>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -74,39 +74,96 @@
                                 </tr>
                                 </thead>
                                 <tbody id="loans-table-body">
-                                {% if list is none %}
+                                {% if list is not none %}
+                                    <script>
+                                        const tbody = document.getElementById('loans-table-body')
+                                        const filterStatus = document.getElementById('filter-status');
+                                        const startDate = document.getElementById('filter-start-date');
+                                        const endDate = document.getElementById('filter-end-date');
+                                        const list = {{ list | tojson }};
+
+                                        function capitalize(str) {
+                                            if (!str) return '';
+                                            return str.charAt(0).toUpperCase() + str.slice(1);
+                                        }
+
+                                        function render_loan() {
+                                            const status = filterStatus.value;
+                                            const start = startDate.value;
+                                            const end = endDate.value;
+
+                                            const filtered = list.filter(l => {
+                                                const statusMatch = (status === 'all') || (l.status === status);
+
+                                                const loanTime = new Date(l.start_date).getTime();
+                                                const startMatch = !start || loanTime >= new Date(start).getTime();
+                                                const endMatch = !end || loanTime <= new Date(end + 'T23:59:59').getTime();
+
+                                                return statusMatch && startMatch && endMatch;
+                                            });
+
+                                            if (filtered.length > 0) {
+                                                tbody.innerHTML = filtered.map(l => `
+                                                <tr>
+                                                    <td class="font-weight-bold">${l.borrower}</td>
+                                                    <td class="font-weight-bold"> $${l.principle} </td>
+                                                    <td> ${l.rate}%</td>
+                                                    <td> ${l.tenure} mo</td>
+                                                    <td> $${l.total_repayable} </td>
+                                                    ${l.status === 'pending'
+                                                    ?
+                                                    `<td>
+                                                        <span class="badge badge-pending">
+                                                            ${capitalize(l.status)}
+                                                        </span>
+                                                     </td>`
+                                                    :
+                                                    ``
+                                                }
+                                                    ${l.status === 'active'
+                                                    ?
+                                                    `<td>
+                                                        <span class="badge badge-active">
+                                                            ${capitalize(l.status)}
+                                                        </span>
+                                                     </td>`
+                                                    :
+                                                    ``
+                                                }
+                                                    <td> ${l.start_date} </td>
+                                                    <td>
+                                                        <a href="{{ url_for('admin.view_loan') }}"
+                                                           class="btn btn-sm btn-gradient-info btn-icon-text mb-1 mb-md-0">
+                                                            <i class="mdi mdi-file-document mr-1"></i>Details
+                                                        </a>
+                                                        ${l.status === 'pending' ?
+                                                    `<button class="btn btn-sm btn-gradient-danger btn-icon-text"
+                                                                                title="Delete Loan"
+                                                                                onclick="handleSweetAlert(${l.id}, 'loan')">
+                                                                            <i class="mdi mdi-delete mr-1"></i>Delete
+                                                                        </button>` :
+                                                    ``
+                                                }
+                                                    </td>
+                                                </tr>
+                                            `).join('');
+                                            } else {
+                                                tbody.innerHTML = `<tr>
+                                                                        <td colspan="9" class="text-center text-muted py-4">No loans match the
+                                                                            filters.
+                                                                        </td>
+                                                                    </tr>`
+                                            }
+                                        }
+
+                                        render_loan()
+                                    </script>
+                                {% else %}
                                     <tr>
                                         <td colspan="9" class="text-center text-muted py-4">No loans match the
                                             filters.
                                         </td>
                                     </tr>
-                                {% else %}
-                                    {% for l in list %}
-                                        <tr>
-                                            <td class="font-weight-bold">{{ l.borrower }}</td>
-                                            <td class="font-weight-bold"> ${{ l.principle }} </td>
-                                            <td> {{ l.rate }}%</td>
-                                            <td> {{ l.tenure }} mo</td>
-                                            <td> ${{ l.total_repayable }} </td>
-                                            <td><span class="badge badge-pending"> {{ l.status }} </span></td>
-                                            <td> {{ l.start_date }} </td>
-                                            <td>
-                                                <a href="{{ url_for('admin.view_loan') }}"
-                                                   class="btn btn-sm btn-gradient-info btn-icon-text mb-1 mb-md-0">
-                                                    <i class="mdi mdi-file-document mr-1"></i>Details
-                                                </a>
-
-                                                {% if l.status == 'Pending' %}
-                                                    <button class="btn btn-sm btn-gradient-danger btn-icon-text"
-                                                            title="Delete Loan"
-                                                            onclick="handleSweetAlert({{ l.id }}, 'loan')">
-                                                        <i class="mdi mdi-delete mr-1"></i>Delete
-                                                    </button>
-                                                {% endif %}
-                                            </td>
-                                        </tr>
-                                    {% endfor %}
-
                                 {% endif %}
                                 </tbody>
                             </table>

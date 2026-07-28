@@ -96,13 +96,26 @@ def loan():
             'rate': 8,
             'tenure': 9,
             'total_repayable': 5200.00,
-            'status': 'Pending',
-            'start_date': '2026-07-09'
+            'status': 'pending',
+            'start_date': '07/18/2026'
+        },
+        {
+            'id': '884',
+            'borrower': 'Hak Korlimhuor',
+            'principle': 12000.00,
+            'rate': 8,
+            'tenure': 3,
+            'total_repayable': 12200.00,
+            'status': 'active',
+            'start_date': '07/19/2026'
         }
     ]
 
     if session.get('user') is None:
         return redirect(url_for('root'))
+
+
+
     return render_template("admin/loan/loan.html",
                            list=loan_list)
 
@@ -139,7 +152,7 @@ def report():
             'tenure': 2,
             'total_repayable': 45000.00,
             'status': 'Pending',
-            'start_date': '2026-07-11'
+            'start_date': '07/19/2026'
         }
     ]
 
