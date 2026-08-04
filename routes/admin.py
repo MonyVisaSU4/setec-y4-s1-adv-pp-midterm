@@ -1,28 +1,28 @@
 from flask import Blueprint, render_template, session, redirect, url_for, jsonify, request
+from flask_login import login_required
+
+from decorators import admin_required
+from extension import db
+from models import Loan
 
 admin = Blueprint("admin", __name__, url_prefix="/")
 
 
-@admin.route("/admin/dashboard", methods=['GET'])
-def dashboard():
-    overdue_loan = [
-        {
-            'name': 'Hak Korlimhuor',
-            'loan_id': 'LOAN_1',
-            'inst': 6,
-            'due_date': '2025-02-01',
-            'amount_due': 889.50,
-            'amount_paid': 333.09,
-        }
-    ]
 
-    if 'admin' not in session['role']:
-        return redirect(url_for('root'))
+@admin.route("/admin/dashboard", methods=['GET'])
+@admin_required
+@login_required
+def dashboard():
+    query = db.select(Loan)
+    total_borrower = db.session.scalar(query)
+    print(f"Total Borrower: ${total_borrower}")
     return render_template("admin/dashboard.html",
-                           overdue_loan=overdue_loan)
+                           overdue_loan=None)
 
 
 @admin.route("/admin/borrower", methods=['GET'])
+@admin_required
+@login_required
 def borrower():
     res = [
         {
@@ -43,8 +43,7 @@ def borrower():
         }
     ]
 
-    if session.get('user') is None:
-        return redirect(url_for('root'))
+    
 
     param = request.args.get('filter')
 
@@ -59,34 +58,37 @@ def borrower():
                            list=res)
 
 @admin.route("/admin/borrower/add", methods=['GET', 'POST'])
+@login_required
+@admin_required
 def add_borrower():
-    if session.get('user') is None:
-        return redirect(url_for('root'))
     return render_template("admin/borrower/add.html")
 
 
 @admin.route("/admin/borrower/view", methods=['GET'])
+@login_required
+@admin_required
 def view_borrower():
-    if session.get('user') is None:
-        return redirect(url_for('root'))
     return render_template("admin/borrower/view.html")
 
 
 @admin.route("/admin/borrower/update", methods=['GET'])
+@login_required
+@admin_required
 def update_borrower():
-    if session.get('user') is None:
-        return redirect(url_for('root'))
     return render_template("admin/borrower/edit.html")
 
 
 @admin.route("/admin/borrower/delete", methods=['GET', 'POST'])
+@login_required
+@admin_required
 def delete_borrower():
-    if session.get('user') is None:
-        return redirect(url_for('root'))
+    
     return render_template("admin/borrower/borrower.html")
 
 
 @admin.route("/admin/loan", methods=['GET'])
+@login_required
+@admin_required
 def loan():
     loan_list = [
         {
@@ -111,8 +113,7 @@ def loan():
         }
     ]
 
-    if session.get('user') is None:
-        return redirect(url_for('root'))
+    
 
 
 
@@ -121,28 +122,33 @@ def loan():
 
 
 @admin.route("/admin/loan/view", methods=['GET'])
+@login_required
+@admin_required
 def view_loan():
-    if session.get('user') is None:
-        return redirect(url_for('root'))
+    
     return render_template("admin/loan/view.html")
 
 
 @admin.route("/admin/loan/add", methods=['GET', 'POST'])
+@login_required
+@admin_required
 def add_loan():
-    if session.get('user') is None:
-        return redirect(url_for('root'))
+    
     return render_template("admin/loan/add.html")
 
 
 @admin.route("/admin/loan/delete", methods=['GET', 'POST'])
+@login_required
+@admin_required
 def delete_loan():
-    if session.get('user') is None:
-        return redirect(url_for('root'))
+    
 
     return render_template("admin/loan/loan.html")
 
 
 @admin.route("/admin/report", methods=['GET'])
+@login_required
+@admin_required
 def report():
     loan_records_list = [
         {
@@ -156,6 +162,5 @@ def report():
         }
     ]
 
-    if session.get('user') is None:
-        return redirect(url_for('root'))
+    
     return render_template("admin/report.html", list=loan_records_list)

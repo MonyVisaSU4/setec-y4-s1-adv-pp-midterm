@@ -22,7 +22,7 @@ class Loan(db.Model):
         Integer, ForeignKey("customer_profiles.customer_id"), nullable=False
     )
     customer_profiles: Mapped["CustomerProfile"] = relationship(
-        "CustomerProfile", back_populates="Loan"
+        "CustomerProfile", back_populates="loan"
     )
 
     amount: Mapped[float] = mapped_column(Float, nullable=False)
@@ -36,5 +36,5 @@ class Loan(db.Model):
     created_at: Mapped[datetime]
 
     repayment_schedule: Mapped[list["RepaymentSchedule"]] = relationship(
-        "RepaymentSchedule", back_populates="Loan"
+        "RepaymentSchedule", back_populates="loan"
     )

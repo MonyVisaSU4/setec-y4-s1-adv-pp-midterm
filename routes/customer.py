@@ -1,8 +1,10 @@
 from flask import Blueprint, render_template, session, redirect, url_for
+from flask_login import login_required
 
 customer = Blueprint("customer", __name__, url_prefix="/")
 
 @customer.route("/customer/dashboard", methods=['GET'])
+@login_required
 def dashboard():
     lists = [
         {
@@ -16,24 +18,23 @@ def dashboard():
         }
     ]
 
-    if 'customer' not in session['role']:
-        return redirect(url_for('root'))
+    
     return render_template("customer/dashboard.html", list=lists)
 
 @customer.route("/customer/loan", methods=['GET'])
+@login_required
 def loan():
-    if 'customer' not in session['role']:
-        return redirect(url_for('root'))
+    
     return render_template("customer/loan.html")
 
 @customer.route("/customer/profile", methods=['GET'])
+@login_required
 def profile():
-    if 'customer' not in session['role']:
-        return redirect(url_for('root'))
+    
     return render_template("customer/profile.html")
 
 @customer.route("/customer/loan/schedule", methods=['GET'])
+@login_required
 def schedule():
-    if 'customer' not in session['role']:
-        return redirect(url_for('root'))
+    
     return render_template("customer/schedule.html")
