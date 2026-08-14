@@ -24,7 +24,7 @@
             <div class="col-12 grid-margin stretch-card">
                 <div class="card">
                     <div class="card-body">
-                        <h4 class="card-title">Search & Filter</h4>
+                        <h4 class="card-title">Filter borrower email</h4>
                         <div class="form-group row mb-0">
                             <div class="col-md-6">
                                 <div class="input-group">
@@ -34,8 +34,9 @@
                                       </span>
                                     </div>
                                     <input type="text" class="form-control border-left-0"
-                                           placeholder="Search borrower by name or national ID..."
+                                           placeholder="Search borrower by email..."
                                            id="input-filter-search"
+                                           name="search-query"
                                     />
                                 </div>
                             </div>
@@ -55,45 +56,45 @@
                             <table class="table table-hover">
                                 <thead>
                                 <tr>
-                                    <th> Name</th>
+                                    <th> Email</th>
                                     <th> Nationality</th>
                                     <th> Phone</th>
-                                    <th> Email</th>
+                                    <th> Address</th>
                                     <th> Created At</th>
                                     <th> Actions</th>
                                 </tr>
                                 </thead>
                                 <tbody id="customers-table-body">
-                                {% if list is none %}
+                                {% if list is none or list|length == 0 %}
                                     <tr>
                                         <td colspan="6" class="text-center text-muted py-4">No borrowers found.</td>
                                     </tr>
                                 {% else %}
                                     {% for l in list %}
-                                        <tr>
+                                        <tr id="borrower-{{ l.customer_id }}">
                                             <td class="font-weight-bold">
                                                 <i class="mdi mdi-account-circle mr-2 text-primary"
                                                    style="font-size:1.2rem;"></i>
-                                                {{ l.name }}
+                                                {{ l.email }}
                                             </td>
-                                            <td><code>{{ l.nationality }}</code></td>
+                                            <td><code>{{ l.national_id }}</code></td>
                                             <td>{{ l.phone }}</td>
-                                            <td>{{ l.email }}</td>
-                                            <td>{{ l.create_at }}</td>
+                                            <td>{{ l.address }}</td>
+                                            <td>{{ l.created_at.strftime('%Y-%m-%d') }}</td>
                                             <td>
-                                                <a href="{{ url_for('admin.view_borrower') }}"
+                                                <a href="{{ url_for('admin.view_borrower', id=l.customer_id) }}"
                                                    class="btn btn-sm btn-gradient-info btn-icon-text mb-1 mb-md-0"
                                                    title="View details and loans">
                                                     <i class="mdi mdi-eye mr-1"></i> View
                                                 </a>
-                                                <a href="{{ url_for('admin.update_borrower') }}"
+                                                <a href="{{ url_for('admin.update_borrower', id=l.customer_id) }}"
                                                    class="btn btn-sm btn-gradient-dark btn-icon-text mb-1 mb-md-0"
                                                    title="Edit Profile">
                                                     <i class="mdi mdi-lead-pencil mr-1"></i> Edit
                                                 </a>
                                                 <button class="btn btn-sm btn-gradient-danger btn-icon-text"
                                                         title="Delete Account"
-                                                        onclick="handleSweetAlert({{ l.id }}, 'borrower')">
+                                                        onclick="handleSweetAlert({{ l.customer_id }}, 'borrower')">
                                                     <i class="mdi mdi-delete mr-1"></i> Delete
                                                 </button>
                                             </td>
@@ -107,7 +108,7 @@
                 </div>
             </div>
         </div>
-
+        <div id="message"></div>
     </div>
     <!-- content-wrapper ends -->
     <footer class="footer" id="footer"></footer>

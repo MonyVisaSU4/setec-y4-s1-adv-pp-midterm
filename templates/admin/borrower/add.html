@@ -1,6 +1,32 @@
 {% extends "layouts/base.html" %}
 
 {% block contents %}
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category,message in messages %}
+                <div style="position: fixed;
+                            top: 20px;
+                            left: 50%;
+                            transform: translateX(-50%);
+                            padding: 14px 24px;
+                            border-radius: 8px;
+                            background-color: green;
+                            color: white;
+                            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+                            font-family: Arial, sans-serif;
+                            font-size: 15px;
+                            font-weight: 500;
+                            z-index: 9999;" class="alert-{{ category }}">
+                    {{ message }}
+                </div>
+                <script>
+                    setTimeout(() => {
+                        window.location.href = "{{ url_for('admin.borrower') }}";
+                    }, 1000)
+                </script>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
     <div class="content-wrapper">
         <!-- Page Header -->
         <div class="page-header">
@@ -29,40 +55,29 @@
                         <p class="card-description"> Create a customer profile which automatically spawns their user
                             portal credentials. </p>
 
-                        <form class="forms-sample" id="addCustomerForm">
+                        <form class="forms-sample"
+                              id="addCustomerForm"
+                              method="POST"
+                              action="{{ url_for('admin.add_borrower') }}"
+                        >
                             <h5 class="text-primary mb-3 mt-4"><i class="mdi mdi-account-card-details mr-2"></i>Personal
                                 Profile</h5>
 
                             <div class="form-group row">
-                                <label for="name" class="col-sm-3 col-form-label font-weight-bold">Full Name</label>
+                                <label for="national_id"
+                                       class="col-sm-3 col-form-label font-weight-bold">Nationality</label>
                                 <div class="col-sm-9">
-                                    <input type="text" class="form-control" id="name" placeholder="John Doe" required>
-                                </div>
-                            </div>
-
-                            <div class="form-group row">
-                                <label for="national_id" class="col-sm-3 col-form-label font-weight-bold">National ID /
-                                    Passport</label>
-                                <div class="col-sm-9">
-                                    <input type="text" class="form-control" id="national_id"
-                                           placeholder="e.g. NID-883712" required>
+                                    <input type="text" class="form-control" id="national_id" name="national_id"
+                                           placeholder="e.g. Khmer, JaoLand, Vietnam" required>
                                 </div>
                             </div>
 
                             <div class="form-group row">
                                 <label for="phone" class="col-sm-3 col-form-label font-weight-bold">Phone Number</label>
                                 <div class="col-sm-9">
-                                    <input type="tel" class="form-control" id="phone" placeholder="e.g. +1 555-0100"
+                                    <input type="tel" class="form-control" name="phone"
+                                           id="phone" placeholder="e.g. +855 97 300 3645"
                                            required>
-                                </div>
-                            </div>
-
-                            <div class="form-group row">
-                                <label for="email" class="col-sm-3 col-form-label font-weight-bold">Email
-                                    Address</label>
-                                <div class="col-sm-9">
-                                    <input type="email" class="form-control" id="email"
-                                           placeholder="john.doe@example.com" required>
                                 </div>
                             </div>
 
@@ -70,7 +85,7 @@
                                 <label for="address" class="col-sm-3 col-form-label font-weight-bold">Home
                                     Address</label>
                                 <div class="col-sm-9">
-                                    <textarea class="form-control" id="address" rows="3"
+                                    <textarea class="form-control" id="address" rows="3" name="address"
                                               placeholder="Street Address, City, State, ZIP" required></textarea>
                                 </div>
                             </div>
@@ -80,11 +95,11 @@
                                 Credentials</h5>
 
                             <div class="form-group row">
-                                <label for="username" class="col-sm-3 col-form-label font-weight-bold">Login
-                                    Username</label>
+                                <label for="login-email" class="col-sm-3 col-form-label font-weight-bold">Login
+                                    Email</label>
                                 <div class="col-sm-9">
-                                    <input type="text" class="form-control" id="username"
-                                           placeholder="Choose a username" required>
+                                    <input type="email" class="form-control" id="email" name="login-email"
+                                           placeholder="Choose an email" required>
                                 </div>
                             </div>
 
@@ -92,14 +107,16 @@
                                 <label for="password" class="col-sm-3 col-form-label font-weight-bold">Login
                                     Password</label>
                                 <div class="col-sm-9">
-                                    <input type="password" class="form-control" id="password"
+                                    <input type="password" class="form-control" id="password" name="login-password"
                                            placeholder="Choose a password" required>
                                 </div>
                             </div>
 
                             <div class="form-group row mt-4">
                                 <div class="col-sm-9 offset-sm-3">
-                                    <button type="submit" class="btn btn-gradient-primary mr-2">Create Account</button>
+                                    <button type="submit" class="btn btn-gradient-primary mr-2"
+                                    >Create Account
+                                    </button>
                                     <a href="{{ url_for('admin.borrower') }}" class="btn btn-light">Cancel</a>
                                 </div>
                             </div>

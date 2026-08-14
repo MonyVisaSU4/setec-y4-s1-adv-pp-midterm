@@ -1,15 +1,13 @@
-import json
-
-from flask import Flask, render_template, request, redirect, url_for, session, make_response
+from flask import Flask, render_template, request, redirect, url_for, session
 from flask_login import current_user, login_user
 from werkzeug.security import check_password_hash
 
 from config import Config
 from extension import db, migrate
+from login_manager import login_manager
+from models import User
 from routes.admin import admin
 from routes.customer import customer
-from models import repayment_schedule, customer_profile, loan, user, User
-from login_manager import login_manager
 
 app = Flask(__name__)
 app.config.from_object(Config)
@@ -24,7 +22,8 @@ app.register_blueprint(customer)
 with app.app_context():
     db.create_all()
     migrate.init_app(app, db)
-    
+
+
 @app.route("/", methods=['GET', 'POST'])
 def root():
     if current_user.is_authenticated:
@@ -36,12 +35,12 @@ def root():
     error = None
 
     if request.method == "POST":
-        email = request.form.get("email")
-        password = request.form.get("password")
+        email: str = request.form.get("email")
+        password: str = request.form.get("password")
 
         user = User.query.filter_by(email=email).first()
 
-        if user and user.get_password() == password:
+        if user and check_password_hash(user.get_password(), password):
             login_user(user)
 
             print("Login called")
@@ -57,10 +56,12 @@ def root():
     return render_template('auth/login.html',
                            error=error)
 
+
 @app.route('/logout', methods=['GET'])
 def logout():
     session.clear()
     return redirect(url_for('root'))
+
 
 if __name__ == "__main__":
     app.run(debug=True)

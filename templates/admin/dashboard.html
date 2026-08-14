@@ -28,7 +28,7 @@
                              class="card-img-absolute" alt="circle-image"/>
                         <h4 class="font-weight-normal mb-3">Total Borrowers <i
                                 class="mdi mdi-account-multiple mdi-24px float-right"></i></h4>
-                        <h2 class="mb-5" id="stat-customers">0</h2>
+                        <h2 class="mb-5" id="stat-customers">{{ total_borrower }}</h2>
                         <p class="card-text">Registered profiles</p>
                     </div>
                 </div>
@@ -40,7 +40,7 @@
                              class="card-img-absolute" alt="circle-image"/>
                         <h4 class="font-weight-normal mb-3">Active Loans <i
                                 class="mdi mdi-cash-multiple mdi-24px float-right"></i></h4>
-                        <h2 class="mb-5" id="stat-active-loans">0</h2>
+                        <h2 class="mb-5" id="stat-active-loans">{{ active_loan }}</h2>
                         <p class="card-text">Currently open loans</p>
                     </div>
                 </div>
@@ -52,7 +52,7 @@
                              class="card-img-absolute" alt="circle-image"/>
                         <h4 class="font-weight-normal mb-3">Total Disbursed <i
                                 class="mdi mdi-trending-up mdi-24px float-right"></i></h4>
-                        <h2 class="mb-5" id="stat-disbursed">$0.00</h2>
+                        <h2 class="mb-5" id="stat-disbursed">${{ "%.2f"|format(total_disbursed or 0) }}</h2>
                         <p class="card-text">Active + Closed principal</p>
                     </div>
                 </div>
@@ -64,7 +64,7 @@
                              class="card-img-absolute" alt="circle-image"/>
                         <h4 class="font-weight-normal mb-3">Total Collected <i
                                 class="mdi mdi-trending-down mdi-24px float-right"></i></h4>
-                        <h2 class="mb-5" id="stat-collected">$0.00</h2>
+                        <h2 class="mb-5" id="stat-collected">${{ "%.2f"|format(total_collected or 0) }}</h2>
                         <p class="card-text">Repayments received</p>
                     </div>
                 </div>

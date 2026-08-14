@@ -4,7 +4,7 @@ from enum import StrEnum
 from flask_login import UserMixin
 from sqlalchemy import *
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from werkzeug.security import generate_password_hash, check_password_hash
+from werkzeug.security import check_password_hash
 
 from extension import db
 
@@ -19,14 +19,17 @@ class User(UserMixin, db.Model):
 
     user_id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     email: Mapped[str] = mapped_column(String(50), nullable=False, unique=True)
-    password_hash: Mapped[str] = mapped_column(String(40), nullable=False)
+    password_hash: Mapped[str] = mapped_column(String(256), nullable=False)
     role: Mapped[Role] = mapped_column(Enum(Role), nullable=False)
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.now())
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.now)
     # This field is about login if it false user can't login.
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
 
     customer_profiles: Mapped["CustomerProfile"] = relationship(
-        "CustomerProfile", back_populates="user"
+        "CustomerProfile",
+        back_populates="user",
+        cascade='all, delete-orphan',
+        passive_deletes=True
     )
 
     def get_id(self):

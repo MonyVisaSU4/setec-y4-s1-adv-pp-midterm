@@ -1,166 +1,466 @@
-from flask import Blueprint, render_template, session, redirect, url_for, jsonify, request
+from datetime import datetime
+
+from dateutil.relativedelta import relativedelta
+from flask import (
+    Blueprint,
+    render_template,
+    jsonify,
+    request,
+    flash,
+)
 from flask_login import login_required
+from sqlalchemy import func, select, and_
+from sqlalchemy.exc import IntegrityError
+from werkzeug.security import generate_password_hash
 
 from decorators import admin_required
 from extension import db
-from models import Loan
+from models import Loan, User, RepaymentSchedule, CustomerProfile
+from models.loan import Status as Status_Loan
+from models.repayment_schedule import Status as Status_Repayment
+from models.user import Role
 
 admin = Blueprint("admin", __name__, url_prefix="/")
 
 
-
-@admin.route("/admin/dashboard", methods=['GET'])
+@admin.route("/admin/dashboard", methods=["GET"])
 @admin_required
 @login_required
 def dashboard():
-    query = db.select(Loan)
-    total_borrower = db.session.scalar(query)
-    print(f"Total Borrower: ${total_borrower}")
-    return render_template("admin/dashboard.html",
-                           overdue_loan=None)
+    try:
+        overdue_loan = RepaymentSchedule.query.filter(RepaymentSchedule.status == Status_Repayment.OVERDUE).all()
+        total_borrower = db.session.query(
+            func.count(CustomerProfile.customer_id)
+        ).scalar()
+        active_loan = Loan.query.filter(Loan.status.like(Status_Loan.ACTIVE)).count()
+        total_disbursed = db.session.query(func.sum(Loan.amount)).scalar()
+        total_collected = db.session.query(
+            func.sum(RepaymentSchedule.amount_paid)
+        ).scalar()
+        overdue_installment = RepaymentSchedule.query.filter(
+            RepaymentSchedule.status.like(Status_Repayment.OVERDUE)
+        ).all()
+
+        if len(overdue_installment) != 0:
+            overdue_loan = overdue_installment
+    except Exception as e:
+        print(e)
+
+    return render_template(
+        "admin/dashboard.html",
+        overdue_loan=overdue_loan,
+        total_borrower=total_borrower,
+        active_loan=active_loan,
+        total_disbursed=total_disbursed,
+        total_collected=total_collected,
+    )
 
 
-@admin.route("/admin/borrower", methods=['GET'])
+@admin.route("/admin/borrower", methods=["GET"])
 @admin_required
 @login_required
 def borrower():
-    res = [
-        {
-            'id': 1,
-            'name': 'Touch Sovannita',
-            'nationality': 'Khmer',
-            'phone': '0973003645',
-            'email': 'visazin128@gmail.com',
-            'create_at': '2026-07-19',
-        },
-        {
-            'id': 2,
-            'name': 'Mony Visa',
-            'nationality': 'Vietnamese',
-            'phone': '0973003645',
-            'email': 'sovannita128@gmail.com',
-            'create_at': '2026-07-19',
-        }
-    ]
+    res = None
+    try:
+        statement = select(
+            CustomerProfile.customer_id,
+            User.email,
+            CustomerProfile.address,
+            CustomerProfile.national_id,
+            CustomerProfile.phone,
+            CustomerProfile.created_at,
+        ).join(CustomerProfile, User.user_id == CustomerProfile.user_id)
 
+        borrowers = db.session.execute(statement).all()
+
+        if len(borrowers) != 0:
+            res = borrowers
+    except Exception as e:
+        print(e)
+
+    return render_template("admin/borrower/borrower.html", list=res)
+
+
+@admin.route("/admin/borrower/filter", methods=["GET"])
+@admin_required
+@login_required
+def filter_borrower():
+    statement = select(
+                CustomerProfile.customer_id,
+                User.email,
+                CustomerProfile.address,
+                CustomerProfile.national_id,
+                CustomerProfile.phone,
+                CustomerProfile.created_at,
+            ).join(CustomerProfile, User.user_id == CustomerProfile.user_id)
     
+    res = db.session.execute(statement).all()
+    data = [dict(row._mapping) for row in res]
+    return jsonify(data)
 
-    param = request.args.get('filter')
 
-    if param is not None:
-        query = param.strip().lower()
-        if query:
-            result = [r for r in res if query in r['name'].strip().lower() or query in r['nationality'].strip().lower()]
-        else: result = res
-        return jsonify(result)
-
-    return render_template("admin/borrower/borrower.html",
-                           list=res)
-
-@admin.route("/admin/borrower/add", methods=['GET', 'POST'])
+@admin.route("/admin/borrower/add", methods=["GET", "POST"])
 @login_required
 @admin_required
 def add_borrower():
+    try:
+        if request.method == "POST":
+            nationality: str = request.form.get("national_id")
+            phone: str = request.form.get("phone")
+            address: str = request.form.get("address")
+            login_email: str = request.form.get("login-email")
+            login_password: str = request.form.get("login-password")
+
+            user = User(
+                email=login_email,
+                password_hash=generate_password_hash(login_password),
+                role=Role.CUSTOMER,
+            )
+            db.session.add(user)
+
+            # INSERT has send but not yet commit.
+            db.session.flush()
+
+            borrower = CustomerProfile(
+                user_id=user.user_id,
+                phone=phone,
+                address=address,
+                national_id=nationality,
+            )
+            db.session.add(borrower)
+
+            if borrower and user:
+                db.session.commit()
+
+            flash("borrower been added", "success")
+    except Exception as e:
+        db.session.rollback()
+        print(e)
     return render_template("admin/borrower/add.html")
 
 
-@admin.route("/admin/borrower/view", methods=['GET'])
+@admin.route("/admin/borrower/view/<int:id>", methods=["GET"])
 @login_required
 @admin_required
-def view_borrower():
-    return render_template("admin/borrower/view.html")
+def view_borrower(id):
+    userdata = None
+    loandata = None
+
+    try:
+        userstmt = db.session.execute(
+            select(
+                CustomerProfile.customer_id,
+                User.email,
+                CustomerProfile.national_id,
+                CustomerProfile.phone,
+                CustomerProfile.address,
+                CustomerProfile.created_at,
+            )
+            .join(CustomerProfile, User.user_id == CustomerProfile.user_id)
+            .where(CustomerProfile.customer_id == id)
+        ).first()
+
+        loanstmt = db.session.execute(
+            select(
+                Loan.loan_id,
+                Loan.amount,
+                Loan.interest_rate,
+                Loan.tenure_month,
+                Loan.total_payable,
+                Loan.status,
+                Loan.start_date,
+            ).where(Loan.customer_id == id)
+        ).all()
+
+        if userstmt and loanstmt is not None:
+            userdata = userstmt
+            loandata = [dict(row._mapping) for row in loanstmt]
+    except Exception as e:
+        print(e)
+
+    return render_template("admin/borrower/view.html", id=id, data=userdata, loandata=loandata)
 
 
-@admin.route("/admin/borrower/update", methods=['GET'])
+@admin.route("/admin/borrower/update/<int:id>", methods=["GET", "POST"])
 @login_required
 @admin_required
-def update_borrower():
-    return render_template("admin/borrower/edit.html")
+def update_borrower(id):
+    try:
+        borrowers = CustomerProfile.query.get_or_404(id)
+
+        if request.method == "POST":
+            nationality: str = request.form["nationality"]
+            phone: str = request.form["phone"]
+            address: str = request.form["address"]
+            password: str | None = request.form["password"]
+
+            borrowers.national_id = nationality
+            borrowers.phone = phone
+            borrowers.address = address
+
+            db.session.flush()
+
+            if password:
+                user = User.query.get_or_404(borrowers.user_id)
+                user.password_hash = generate_password_hash(password)
+
+            if borrowers:
+                db.session.commit()
+            flash("borrower been updated", "success")
+    except Exception as e:
+        db.session.rollback()
+        print(e)
+    return render_template("admin/borrower/edit.html", id=id, borrowers=borrowers)
 
 
-@admin.route("/admin/borrower/delete", methods=['GET', 'POST'])
+@admin.route("/admin/borrower/delete/<int:id>", methods=["GET", "POST"])
 @login_required
 @admin_required
-def delete_borrower():
-    
-    return render_template("admin/borrower/borrower.html")
+def delete_borrower(id):
+    res = None
+
+    try:
+        loan = Loan.query.filter(Loan.customer_id == id).first()
+        print(f"Loan: {loan}")
+
+        if loan:
+            res = {"message": "This borrower has loan. Deletion cannot be allowed."}
+            return render_template("admin/borrower/edit.html")
+        borrower = CustomerProfile.query.get_or_404(id)
+        user = borrower.user
+
+        db.session.delete(borrower)
+        db.session.delete(user)
+        db.session.commit()
+        res = {"message": "Success"}
+    except IntegrityError as e:
+        res = {"message": "This borrower has loan. Deletion cannot be allowed."}
+        db.session.rollback()
+    except Exception as e:
+        db.session.rollback()
+        print(e)
+
+    return jsonify(res)
 
 
-@admin.route("/admin/loan", methods=['GET'])
+@admin.route("/admin/loan", methods=["GET"])
 @login_required
 @admin_required
 def loan():
-    loan_list = [
-        {
-            'id': '882',
-            'borrower': 'Touch Sovannita',
-            'principle': 5000.00,
-            'rate': 8,
-            'tenure': 9,
-            'total_repayable': 5200.00,
-            'status': 'pending',
-            'start_date': '07/18/2026'
-        },
-        {
-            'id': '884',
-            'borrower': 'Hak Korlimhuor',
-            'principle': 12000.00,
-            'rate': 8,
-            'tenure': 3,
-            'total_repayable': 12200.00,
-            'status': 'active',
-            'start_date': '07/19/2026'
-        }
-    ]
-
-    
+    try:
+        loans = Loan.query.all()
+    except Exception as e:
+        loans = None
+        print(e)
+    return render_template("admin/loan/loan.html", loans=loans)
 
 
-
-    return render_template("admin/loan/loan.html",
-                           list=loan_list)
-
-
-@admin.route("/admin/loan/view", methods=['GET'])
+@admin.route("/admin/loan/filter", methods=["GET"])
 @login_required
 @admin_required
-def view_loan():
-    
-    return render_template("admin/loan/view.html")
+def filter_loan():
+    try:
+        status = request.args.get("status")
+        sdate = request.args.get("sdate")
+        edate = request.args.get("edate")
+        loans = (
+            select(
+                Loan.loan_id,
+                User.email,
+                Loan.amount,
+                Loan.interest_rate,
+                Loan.tenure_month,
+                Loan.total_payable,
+                Loan.status,
+                Loan.start_date,
+            )
+            .join(CustomerProfile, Loan.customer_id == CustomerProfile.customer_id)
+            .join(User, CustomerProfile.user_id == User.user_id)
+        )
+
+        condition = []
+
+        if status and status != "all":
+            condition.append(Loan.status == Status_Loan(status))
+        if sdate:
+            condition.append(Loan.start_date >= sdate)
+        if edate:
+            condition.append(Loan.start_date <= edate)
+
+        res = db.session.execute(loans.filter(and_(*condition))).all()
+        data = [dict(row._mapping) for row in res]
+        return jsonify(data)
+    except Exception as e:
+        print(e)
 
 
-@admin.route("/admin/loan/add", methods=['GET', 'POST'])
+@admin.route("/admin/loan/view/<int:id>", methods=["GET"])
+@login_required
+@admin_required
+def view_loan(id):
+    loans = Loan.query.get_or_404(id)
+    total_collect = 0
+    repayment_schedule = RepaymentSchedule.query.filter(RepaymentSchedule.loan_id == loans.loan_id).all()
+
+    try:
+        get_total_collect = db.session.execute(
+            (
+                select(RepaymentSchedule.amount_paid).join(
+                    Loan, RepaymentSchedule.loan_id == Loan.loan_id
+                )
+            )
+        ).scalar()
+
+        if get_total_collect is not None:
+            total_collect = get_total_collect
+    except Exception as e:
+        print(e)
+    return render_template(
+        "admin/loan/view.html",
+        loans=loans,
+        total_collect=total_collect,
+        repayment_schedule=repayment_schedule
+    )
+
+
+@admin.route("/admin/loan/add", methods=["GET", "POST"])
 @login_required
 @admin_required
 def add_loan():
-    
-    return render_template("admin/loan/add.html")
+    try:
+        borrowers = CustomerProfile.query.all()
+        if request.method == "POST":
+            borrower_choose = request.form["customer_id"]
+            principle = float(request.form["principle-loan"])
+            interest = int(request.form["interest"])
+            tenure = int(request.form["tenure"])
+            start_date = datetime.fromisoformat(request.form["start-date"])
+            tenure_year = tenure / 12
+            total_interest = principle * (interest / 100) * tenure_year
+            total_payable = principle + total_interest
+
+            loans = Loan(
+                customer_id=borrower_choose,
+                amount=principle,
+                interest_rate=interest,
+                tenure_month=tenure,
+                start_date=start_date,
+                status=Status_Loan.ACTIVE,
+                total_payable=total_payable,
+            )
+            findLoan = Loan.query.filter(loans.customer_id == Loan.customer_id).all()
+
+            if findLoan:
+                flash('this borrower already loaned.', 'warning')
+            else:
+                db.session.add(loans)
+                db.session.flush()
+
+                replayment_schedule = []
+
+                for i in range(tenure):
+                    replayment_schedule.append(
+                            RepaymentSchedule(
+                                loan_id=loans.loan_id,
+                                due_date=start_date + relativedelta(months=i + 1),
+                                amount_due=total_payable / tenure,
+                                amount_paid=0,
+                                status=Status_Repayment.PENDING,
+                                paid_date=None
+                            )
+                        )
+
+                for r in replayment_schedule:
+                    db.session.add(r)
+
+                db.session.commit()
+                flash("loan added", "success")
+    except Exception as e:
+        db.session.rollback()
+        flash(e, "danger")
+    return render_template("admin/loan/add.html", borrowers=borrowers)
 
 
-@admin.route("/admin/loan/delete", methods=['GET', 'POST'])
-@login_required
-@admin_required
-def delete_loan():
-    
-
-    return render_template("admin/loan/loan.html")
-
-
-@admin.route("/admin/report", methods=['GET'])
+@admin.route("/admin/report", methods=["GET"])
 @login_required
 @admin_required
 def report():
-    loan_records_list = [
-        {
-            'name': 'Peang Leanghour',
-            'principal': 5000.00,
-            'rate': 8,
-            'tenure': 2,
-            'total_repayable': 45000.00,
-            'status': 'Pending',
-            'start_date': '07/19/2026'
-        }
-    ]
+    try:
+        selected = (
+            select(
+                Loan.loan_id,
+                User.email,
+                Loan.amount,
+                Loan.interest_rate,
+                Loan.tenure_month,
+                Loan.total_payable,
+                Loan.status,
+                Loan.start_date,
+            )
+            .join(CustomerProfile, Loan.customer_id == CustomerProfile.customer_id)
+            .join(User, CustomerProfile.user_id == User.user_id)
+        )
 
-    
-    return render_template("admin/report.html", list=loan_records_list)
+        audited_loan_records = db.session.execute(selected).all()
+
+        matching_loan = (
+                db.session.execute(select(func.count(CustomerProfile.customer_id))).scalar() or 0
+        )
+        disbursed_principal = db.session.execute(select(func.sum(Loan.amount))).scalar() or 0
+        total_payable = db.session.execute(select(func.sum(Loan.total_payable))).scalar() or 0
+        expected_interest = total_payable - disbursed_principal or 0
+        collected_repayment = (
+                db.session.execute(select(func.sum(RepaymentSchedule.amount_paid))).scalar() or 0
+        )
+    except Exception as e:
+        print(e)
+    return render_template(
+        "admin/report.html",
+        matching_loan=matching_loan,
+        disbursed_principal=disbursed_principal,
+        expected_interest=expected_interest,
+        collected_repayment=collected_repayment,
+        audited_loan_records=audited_loan_records,
+    )
+
+
+@admin.route("/admin/report/filter", methods=["GET"])
+@admin_required
+@login_required
+def filter_report():
+    try:
+        report_status = request.args.get("report_status")
+        report_sdate = request.args.get("report_sdate")
+        report_edate = request.args.get("report_edate")
+        selected = (
+            select(
+                Loan.loan_id,
+                User.email,
+                Loan.amount,
+                Loan.interest_rate,
+                Loan.tenure_month,
+                Loan.total_payable,
+                Loan.status,
+                Loan.start_date,
+            )
+            .join(CustomerProfile, Loan.customer_id == CustomerProfile.customer_id)
+            .join(User, CustomerProfile.user_id == User.user_id)
+        )
+
+        condition = []
+
+        if report_status and report_status != "all":
+            condition.append(Loan.status == Status_Loan(report_status))
+        if report_sdate:
+            condition.append(Loan.start_date >= report_sdate)
+        if report_edate:
+            condition.append(Loan.start_date <= report_edate)
+
+        get_audited_loan_records = db.session.execute(
+            selected.filter(and_(*condition))
+        ).all()
+
+        audited_loan_records = [dict(row._mapping) for row in get_audited_loan_records]
+        return jsonify(audited_loan_records)
+    except Exception as e:
+        print(e)

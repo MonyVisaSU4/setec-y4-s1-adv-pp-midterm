@@ -23,10 +23,11 @@
             <div class="col-md-4 stretch-card grid-margin">
                 <div class="card bg-gradient-success card-img-holder text-white">
                     <div class="card-body">
-                        <img src="assets/images/dashboard/circle.svg" class="card-img-absolute" alt="circle-image"/>
+                        <img src="{{ url_for('static', filename='assets/images/dashboard/circle.svg') }}"
+                             class="card-img-absolute" alt="circle-image"/>
                         <h4 class="font-weight-normal mb-3">Total Borrowed <i
                                 class="mdi mdi-trending-up mdi-24px float-right"></i></h4>
-                        <h2 class="mb-5" id="cust-stat-borrowed">$0.00</h2>
+                        <h2 class="mb-5" id="cust-stat-borrowed">${{ "%.2f"|format(total_borrowed) }}</h2>
                         <p class="card-text">Principal of active loan agreements</p>
                     </div>
                 </div>
@@ -34,10 +35,11 @@
             <div class="col-md-4 stretch-card grid-margin">
                 <div class="card bg-gradient-danger card-img-holder text-white">
                     <div class="card-body">
-                        <img src="assets/images/dashboard/circle.svg" class="card-img-absolute" alt="circle-image"/>
+                        <img src="{{ url_for('static', filename='assets/images/dashboard/circle.svg') }}"
+                             class="card-img-absolute" alt="circle-image"/>
                         <h4 class="font-weight-normal mb-3">Remaining Balance <i
                                 class="mdi mdi-scale-balance mdi-24px float-right"></i></h4>
-                        <h2 class="mb-5" id="cust-stat-balance">$0.00</h2>
+                        <h2 class="mb-5" id="cust-stat-balance">${{ "%.2f"|format(remaining_balance) }}</h2>
                         <p class="card-text">Principal + Flat Interest outstanding</p>
                     </div>
                 </div>
@@ -45,12 +47,14 @@
             <div class="col-md-4 stretch-card grid-margin">
                 <div class="card bg-gradient-warning card-img-holder text-white">
                     <div class="card-body">
-                        <img src="assets/images/dashboard/circle.svg" class="card-img-absolute" alt="circle-image"/>
+                        <img src="{{ url_for('static', filename='assets/images/dashboard/circle.svg') }}"
+                             class="card-img-absolute" alt="circle-image"/>
                         <h4 class="font-weight-normal mb-3">Next Due Installment <i
                                 class="mdi mdi-calendar-clock mdi-24px float-right"></i></h4>
-                        <h2 class="mb-3" id="cust-stat-due-amount">$0.00</h2>
+                        <h2 class="mb-3" id="cust-stat-due-amount">${{ "%.2f"|format(next_due_installment) }}</h2>
                         <p class="card-text mb-0">Due Date: <span class="font-weight-bold"
-                                                                  id="cust-stat-due-date">N/A</span></p>
+                                                                  id="cust-stat-due-date">{{ due_date.strftime('%Y-%m-%d') }}</span>
+                        </p>
                     </div>
                 </div>
             </div>
@@ -74,26 +78,29 @@
                                     <th> Total Paid</th>
                                     <th> Status</th>
                                     <th> Start Date</th>
+
                                     <th> Action</th>
                                 </tr>
                                 </thead>
                                 <tbody id="my-loans-table-body">
-                                {% if list is not none %}
-                                    {% for l in list %}
+                                {% if my_loan_portfolio is not none %}
+                                    {% for l in my_loan_portfolio %}
                                         <tr>
-                                            <td class="font-weight-bold"> ${{ l.principle }} </td>
-                                            <td> {{ l.interest_rate }}%</td>
-                                            <td> {{ l.duration }} mo</td>
+                                            <td class="font-weight-bold"> ${{ "%.2f"|format(l.priciple_amount) }} </td>
+                                            <td> {{ "%.0f"|format(l.interest_rate) }}%</td>
+                                            <td> {{ l.duration }} month</td>
                                             <td class="font-weight-bold text-dark">
-                                                ${{ l.total_repayable }}
+                                                ${{ "%.2f"|format(l.total_repayable) }}
                                             </td>
                                             <td class="text-success font-weight-bold">
-                                                ${{ l.total_paid }}
+                                                ${{ "%.2f"|format(l.total_paid) }}
                                             </td>
-                                            <td><span class="badge ${badgeClass}">{{ l.status }}</span></td>
-                                            <td> {{ l.start_date }}</td>
+                                            <td><span class="badge badge-{{ l.status|lower }}">{{ l.status|lower }}</span>
+                                            </td>
+                                            <td> {{ l.start_date.strftime('%Y-%m-%d') }}</td>
+
                                             <td>
-                                                <a href="{{ url_for('customer.schedule') }}"
+                                                <a href="{{ url_for('customer.schedule', id=id) }}"
                                                    class="btn btn-sm btn-gradient-info btn-icon-text">
                                                     <i class="mdi mdi-eye mr-1"></i>View Schedule
                                                 </a>

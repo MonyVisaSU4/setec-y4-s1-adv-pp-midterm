@@ -29,47 +29,50 @@
                         <div class="d-flex justify-content-between align-items-center pb-3 border-bottom mb-4">
                             <h4 class="card-title mb-0"><i class="mdi mdi-information-outline mr-1 text-primary"></i>Loan
                                 Summary</h4>
-                            <span id="loan-status-badge" class="badge badge-pending font-weight-bold">Pending</span>
+                            <span id="loan-status-badge" class="badge badge-active font-weight-bold">Active</span>
                         </div>
 
                         <div class="py-2">
                             <p class="clearfix">
-                                <span class="float-left font-weight-bold">Loan Agreement ID</span>
-                                <span class="float-right text-muted" id="loan-id">N/A</span>
+                                <span class="float-left font-weight-bold">Borrower Name:</span>
+                                <span class="float-right text-primary font-weight-bold"><a
+                                        id="loan-borrower">{{ loans.customer_profiles.user.email }}</a></span>
                             </p>
                             <p class="clearfix">
-                                <span class="float-left font-weight-bold">Borrower Name</span>
-                                <span class="float-right text-primary font-weight-bold"><a id="loan-borrower" href="#">John Doe</a></span>
+                                <span class="float-left font-weight-bold">Principal Disbursed:</span>
+                                <span class="float-right text-dark font-weight-bold"
+                                      id="loan-principal">${{ "%.2f"|format(loans.amount) }}</span>
                             </p>
                             <p class="clearfix">
-                                <span class="float-left font-weight-bold">Principal Disbursed</span>
-                                <span class="float-right text-dark font-weight-bold" id="loan-principal">$0.00</span>
+                                <span class="float-left font-weight-bold">Annual Flat Interest:</span>
+                                <span class="float-right text-muted"
+                                      id="loan-rate">{{ "%.0f"|format(loans.interest_rate) }}%</span>
                             </p>
                             <p class="clearfix">
-                                <span class="float-left font-weight-bold">Annual Flat Interest</span>
-                                <span class="float-right text-muted" id="loan-rate">0%</span>
+                                <span class="float-left font-weight-bold">Tenure duration:</span>
+                                <span class="float-right text-muted"
+                                      id="loan-tenure">{{ loans.tenure_month }} Months</span>
                             </p>
                             <p class="clearfix">
-                                <span class="float-left font-weight-bold">Tenure duration</span>
-                                <span class="float-right text-muted" id="loan-tenure">0 Months</span>
-                            </p>
-                            <p class="clearfix">
-                                <span class="float-left font-weight-bold">Start Date</span>
-                                <span class="float-right text-muted" id="loan-start">N/A</span>
+                                <span class="float-left font-weight-bold">Start Date:</span>
+                                <span class="float-right text-muted"
+                                      id="loan-start">{{ loans.start_date.strftime('%Y-%m-%d') }}</span>
                             </p>
                             <hr>
                             <p class="clearfix">
                                 <span class="float-left font-weight-bold text-primary">Total Repayable (Flat)</span>
-                                <span class="float-right text-primary font-weight-bold" id="loan-payable">$0.00</span>
+                                <span class="float-right text-primary font-weight-bold"
+                                      id="loan-payable">${{ "%.2f"|format(loans.total_payable) }}</span>
                             </p>
                             <p class="clearfix">
                                 <span class="float-left font-weight-bold text-success">Total Collected</span>
-                                <span class="float-right text-success font-weight-bold" id="loan-collected">$0.00</span>
+                                <span class="float-right text-success font-weight-bold"
+                                      id="loan-collected">${{ "%.2f"|format(total_collect) }}</span>
                             </p>
                             <p class="clearfix">
                                 <span class="float-left font-weight-bold text-danger">Outstanding Balance</span>
                                 <span class="float-right text-danger font-weight-bold"
-                                      id="loan-outstanding">$0.00</span>
+                                      id="loan-outstanding">${{ "%.2f"|format(loans.total_payable - total_collect) }}</span>
                             </p>
                         </div>
 
@@ -97,7 +100,6 @@
                             <table class="table table-hover">
                                 <thead>
                                 <tr>
-                                    <th>#</th>
                                     <th>Due Date</th>
                                     <th>Amount Due</th>
                                     <th>Amount Paid</th>
@@ -107,7 +109,28 @@
                                 </tr>
                                 </thead>
                                 <tbody id="schedule-table-body">
-                                <!-- Dynamically filled -->
+                                {% if repayment_schedule %}
+                                    {% for l in repayment_schedule %}
+                                        <tr>
+                                            <td class="font-weight-bold">{{ l.due_date.strftime('%Y-%m-%d') }}</td>
+                                            <td>${{ "%.2f"|format(l.amount_due) }}</td>
+                                            <td>${{ "%.2f"|format(l.amount_paid) }}</td>
+                                            <td><span class="badge badge-{{ l.status|lower }}">
+                                                  {{ l.status|lower }}
+                                              </span></td>
+                                            {% if l.paid_date is none %}
+                                                <td></td>
+                                            {% else %}
+                                                <td>{{ l.paid_date.strftime('%Y-%m-%d') }}</td>
+                                            {% endif %}
+                                            <td>
+                                                <button class="btn btn-sm btn-gradient-warning">
+                                                    Repay
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                {% endif %}
                                 </tbody>
                             </table>
                         </div>

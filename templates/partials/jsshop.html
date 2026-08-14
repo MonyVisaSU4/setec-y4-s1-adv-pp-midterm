@@ -1,10 +1,22 @@
 <script src="{{ url_for('static', filename='assets/js/layout.js') }}"></script>
 <script src="{{ url_for('static', filename='assets/js/js-inject-style-layout.js') }}"></script>
 <script src="{{ url_for('static', filename='assets/js/navbar.js') }}"></script>
+<script type="module" src="{{ url_for('static', filename='assets/js/repayment-schedule-preview.js') }}"></script>
+<script src="{{ url_for('static', filename='assets/js/calculate-loan.js') }}"></script>
+<script type="module" src="{{ url_for('static', filename='assets/js/filter-report-audit-loan.js') }}"></script>
+<script type="module" src="{{ url_for('static', filename='assets/js/filter-loan.js') }}"></script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-{% include "partials/jsborrower/filter-search.html" %}
 
 <script>
+    const VIEW_BORROWER_URL = "{{ url_for('admin.view_borrower', id=0) }}";
+    const EDIT_BORROWER_URL = "{{ url_for('admin.update_borrower', id=0) }}";
+    const VIEW_LOAN_URL = "{{ url_for('admin.view_loan', id=0) }}";
+</script>
+
+<script src="{{ url_for('static', filename='assets/js/filter-borrower-list.js') }}"></script>
+
+<script>
+    const borrowePage = "{{ url_for('admin.borrower') }}"
     const handleSweetAlert = (id, page) => {
         function confirmSubmit() {
             Swal.fire({
@@ -15,10 +27,32 @@
                 confirmButtonText: 'Ok'
             }).then((result) => {
                 if (result.value) {
-                    if(page.name === 'borrower'){
-                        console.log("Borrower: ", id)
-                    } else{
-                        console.log("Loan: ", id)
+                    if (page === 'borrower') {
+                        fetch(`/admin/borrower/delete/${id}`)
+                            .then(res => res.json())
+                            .then(data => {
+                                const row = document.getElementById(`borrower-${id}`);
+
+
+                                if (data.message !== 'Success') {
+                                    document.getElementById('message').innerHTML +=
+                                        `<div style="position: fixed; top: 20px; left: 50%; transform: translateX(-50%); background: red; color: white; padding: 14px 24px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.2); font-family: Arial, sans-serif; font-size: 15px; font-weight: 500; z-index: 9999;">
+                                            ${data.message}
+                                        </div>`
+                                } else {
+                                    if (row) {
+                                        row.remove();
+                                    }
+                                    document.getElementById('message').innerHTML +=
+                                        `<div style="position: fixed; top: 20px; left: 50%; transform: translateX(-50%); background: green; color: white; padding: 14px 24px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.2); font-family: Arial, sans-serif; font-size: 15px; font-weight: 500; z-index: 9999;">
+                                            ${data.message}
+                                        </div>`
+                                }
+
+                                setTimeout(() => {
+                                    window.location.href = "{{ url_for('admin.borrower') }}"
+                                }, 2000)
+                            })
                     }
                     // come back soon
                     // go to: https://claude.ai/chat/17b9f4bd-ac1c-46cf-9e57-0d951b8699cb#:~:text=was%20actually%20deleted.-,The%20right%20flow,-User%20clicks%20confirm

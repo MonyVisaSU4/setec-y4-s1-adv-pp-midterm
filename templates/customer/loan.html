@@ -1,78 +1,100 @@
 {% extends "layouts/base.html" %}
 
 {% block contents %}
-	<div class="content-wrapper">
-          <!-- Page Header -->
-          <div class="page-header flex-wrap">
+    <div class="content-wrapper">
+        <!-- Page Header -->
+        <div class="page-header flex-wrap">
             <h3 class="page-title">
               <span class="page-title-icon bg-gradient-success text-white mr-2">
                 <i class="mdi mdi-cash-multiple"></i>
               </span> My Loans
             </h3>
             <nav aria-label="breadcrumb">
-              <ol class="breadcrumb">
-                <li class="breadcrumb-item"><a href="{{ url_for('customer.dashboard') }}">Home</a></li>
-                <li class="breadcrumb-item active" aria-current="page">Loans</li>
-              </ol>
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{{ url_for('customer.dashboard') }}">Home</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">Loans</li>
+                </ol>
             </nav>
-          </div>
-
-          <!-- Alert area -->
-          <div id="alert-container" class="alert alert-danger d-none" role="alert"></div>
-
-          <!-- Filter Card -->
-          <div class="row mb-4">
-            <div class="col-12 grid-margin stretch-card">
-              <div class="card">
-                <div class="card-body">
-                  <h4 class="card-title">Filter My Loans</h4>
-                  <div class="form-group row mb-0">
-                    <div class="col-md-4">
-                      <select class="form-control" id="cust-filter-status" onchange="applyFilter()">
-                        <option value="All">All Loans</option>
-                        <option value="Pending">Pending</option>
-                        <option value="Active">Active</option>
-                        <option value="Closed">Closed</option>
-                      </select>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Loans Table Card -->
-          <div class="row">
-            <div class="col-12 grid-margin stretch-card">
-              <div class="card">
-                <div class="card-body">
-                  <h4 class="card-title">Agreement Portfolios</h4>
-                  <div class="table-responsive">
-                    <table class="table table-hover">
-                      <thead>
-                        <tr>
-                          <th> Loan ID </th>
-                          <th> Principal Amount </th>
-                          <th> Interest Rate </th>
-                          <th> Duration </th>
-                          <th> Total Repayable </th>
-                          <th> Total Paid </th>
-                          <th> Status </th>
-                          <th> Start Date </th>
-                          <th> Action </th>
-                        </tr>
-                      </thead>
-                      <tbody id="cust-loans-table-body">
-                        <!-- Dynamically filled -->
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
         </div>
-        <!-- content-wrapper ends -->
-        <footer class="footer" id="footer"></footer>
+
+        <!-- Alert area -->
+        <div id="alert-container" class="alert alert-danger d-none" role="alert"></div>
+
+        <!-- Filter Card -->
+        <div class="row mb-4">
+            <div class="col-12 grid-margin stretch-card">
+                <div class="card">
+                    <div class="card-body">
+                        <h4 class="card-title">Filter My Loans</h4>
+                        <div class="form-group row mb-0">
+                            <div class="col-md-4">
+                                <select class="form-control" id="cust-filter-status" onchange="applyFilter()">
+                                    <option value="All">All Loans</option>
+                                    <option value="Pending">Pending</option>
+                                    <option value="Active">Active</option>
+                                    <option value="Closed">Closed</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Loans Table Card -->
+        <div class="row">
+            <div class="col-12 grid-margin stretch-card">
+                <div class="card">
+                    <div class="card-body">
+                        <h4 class="card-title">Agreement Portfolios</h4>
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                <tr>
+                                    <th> Principal Amount</th>
+                                    <th> Interest Rate</th>
+                                    <th> Duration</th>
+                                    <th> Total Repayable</th>
+                                    <th> Total Paid</th>
+                                    <th> Status</th>
+                                    <th> Start Date</th>
+                                    <th> Action</th>
+                                </tr>
+                                </thead>
+                                <tbody id="cust-loans-table-body">
+                                {% if loans %}
+                                    {% for loan in loans %}
+                                        <tr data-status="{{ loan.status }}">
+                                            <td class="font-weight-bold">${{ "%.2f"|format(loan.amount) }}</td>
+                                            <td>{{ "%.0f"|format(loan.interest_rate) }}%</td>
+                                            <td>{{ loan.tenure_month }} month{% if loan.tenure_month != 1 %}s{% endif %}</td>
+                                            <td class="font-weight-bold text-dark">${{ "%.2f"|format(loan.total_payable) }}</td>
+                                            <td class="text-success font-weight-bold">${{ "%.2f"|format(loan.total_paid) }}</td>
+                                            <td><span class="badge badge-{{ loan.status|lower }}">{{ loan.status|lower }}</span></td>
+                                            <td>{{ loan.start_date.strftime('%Y-%m-%d') if loan.start_date else '-' }}</td>
+                                            <td>
+                                                <a href="{{ url_for('customer.schedule', id=loan.loan_id) }}" class="btn btn-sm btn-gradient-info btn-icon-text">
+                                                    <i class="mdi mdi-eye mr-1"></i>View Schedule
+                                                </a>
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                {% else %}
+                                    <tr>
+                                        <td colspan="9" class="text-center text-muted py-4">
+                                            You do not have any active or past loans.
+                                        </td>
+                                    </tr>
+                                {% endif %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+    <!-- content-wrapper ends -->
+    <footer class="footer" id="footer"></footer>
 {% endblock %}
