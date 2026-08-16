@@ -1,0 +1,114 @@
+{% extends "layouts/base.html" %}
+
+{% block contents %}
+    <div class="content-wrapper">
+        <!-- Page Header -->
+        <div class="page-header flex-wrap">
+            <h3 class="page-title">
+              <span class="page-title-icon bg-gradient-primary text-white mr-2">
+                <i class="mdi mdi-cash-multiple"></i>
+              </span> Manage Loans
+            </h3>
+            <div class="d-flex align-items-center mt-2 mt-md-0">
+                <a href="{{ url_for('admin.add_loan') }}" class="btn btn-gradient-primary btn-icon-text">
+                    <i class="mdi mdi-plus mr-2"></i> Create Loan
+                </a>
+            </div>
+        </div>
+
+        <!-- Alert area -->
+        <div id="alert-container" class="alert alert-danger d-none mt-2" role="alert"></div>
+
+        <!-- Filters Section -->
+        <div class="row mb-4">
+            <div class="col-12 grid-margin stretch-card">
+                <div class="card">
+                    <div class="card-body">
+                        <h4 class="card-title">Filter Loans</h4>
+                        <div id="filter-form">
+                            <div class="row">
+                                <div class="col-md-4 form-group">
+                                    <label for="filter-status" class="font-weight-bold">Status</label>
+                                    <select class="form-control" id="filter-status">
+                                        <option value="all">All Statuses</option>
+                                        <option value="active">Active</option>
+                                        <option value="closed">Closed</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-4 form-group">
+                                    <label for="filter-start-date" class="font-weight-bold">Start Date From</label>
+                                    <input type="date" class="form-control" id="filter-start-date"
+                                    >
+                                </div>
+                                <div class="col-md-4 form-group">
+                                    <label for="filter-end-date" class="font-weight-bold">Start Date To</label>
+                                    <input type="date" class="form-control" id="filter-end-date"
+                                    >
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Loans List Table -->
+        <div class="row">
+            <div class="col-12 grid-margin stretch-card">
+                <div class="card">
+                    <div class="card-body">
+                        <h4 class="card-title">Loan Agreements</h4>
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                <tr>
+                                    <th> Borrower</th>
+                                    <th> Principal</th>
+                                    <th> Rate</th>
+                                    <th> Tenure</th>
+                                    <th> Total Repayable</th>
+                                    <th> Status</th>
+                                    <th> Start Date</th>
+                                    <th> Actions</th>
+                                </tr>
+                                </thead>
+                                <tbody id="loans-table-body">
+                                {% if loans is not none %}
+                                    {% for l in loans %}
+                                        <tr>
+                                            <td className="font-weight-bold">{{ l.customer_profiles.user.email }}</td>
+                                            <td className="font-weight-bold"> ${{ "%.2f"|format(l.amount) }} </td>
+                                            <td> {{ "%.0f"|format(l.interest_rate) }}%</td>
+                                            <td> {{ l.tenure_month }} mo</td>
+                                            <td> ${{ "%.2f"|format(l.total_payable) }} </td>
+                                            <td>
+                                                <span class="badge badge-{{ l.status | lower }}">
+                                                    {{ l.status }}
+                                                </span>
+                                            </td>
+                                            <td> {{ l.start_date.strftime('%Y-%m-%d') }} </td>
+                                            <td>
+                                                <a href="{{ url_for('admin.view_loan', id=l.loan_id) }}"
+                                                   class="btn btn-sm btn-gradient-info btn-icon-text mb-1 mb-md-0">
+                                                    <i class="mdi mdi-file-document mr-1"></i>Details
+                                                </a>
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                {% else %}
+                                    <td colspan="9" class="text-center text-muted py-4">No loans match the
+                                        filters.
+                                    </td>
+                                {% endif %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+    <!-- content-wrapper ends -->
+    <footer class="footer" id="footer"></footer>
+{% endblock %}

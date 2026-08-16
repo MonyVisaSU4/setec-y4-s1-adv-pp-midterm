@@ -1,0 +1,47 @@
+<div class="modal fade" id="repaymentModal" tabindex="-1" role="dialog" aria-labelledby="repaymentModalLabel"
+     aria-hidden="true">
+    <div class="modal-dialog text-dark" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title font-weight-bold" id="repaymentModalLabel">Record Repayment</h5>
+                <button onclick="hideModal()" type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <form id="repaymentForm">
+                <div class="modal-body">
+                    <input type="hidden" id="modalInstallmentId">
+                    <div class="form-group">
+                        <label class="font-weight-bold">Remaining Due ($)</label>
+                        <input type="text"
+                               class="form-control"
+                               id="modalAmountDue"
+                               name="modalAmountDue"
+                               readonly>
+                    </div>
+                    <div class="form-group">
+                        <label class="font-weight-bold">Repay Amount ($)</label>
+                        <input type="number"
+                               class="form-control"
+                               id="modalRepayAmount"
+                               name="modalRepayAmount"
+                               step="0.01" min="0.01"
+                               required>
+                    </div>
+                    <div class="form-group">
+                        <label class="font-weight-bold">Payment Date</label>
+                        <input type="date"
+                               class="form-control"
+                               id="modalPayDate"
+                               name="modalPayDate"
+                               required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light" data-dismiss="modal" onclick="hideModal()">Cancel</button>
+                    <button type="submit" class="btn btn-gradient-primary">Record Payment</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

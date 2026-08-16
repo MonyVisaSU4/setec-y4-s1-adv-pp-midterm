@@ -1,0 +1,207 @@
+{% extends "layouts/base.html" %}
+
+{% block contents %}
+    <div class="content-wrapper">
+        <!-- Page Header -->
+        <div class="page-header flex-wrap">
+            <h3 class="page-title">
+              <span class="page-title-icon bg-gradient-primary text-white mr-2">
+                <i class="mdi mdi-file-document"></i>
+              </span> Reports & Audits
+            </h3>
+            <div class="d-flex align-items-center mt-2 mt-md-0">
+                <button class="btn btn-gradient-success btn-icon-text font-weight-bold" onclick="">
+                    <i class="mdi mdi-file-export mr-2"></i> Export to CSV
+                </button>
+            </div>
+        </div>
+
+        <!-- Filters Card -->
+        <div class="row mb-4">
+            <div class="col-12 grid-margin stretch-card">
+                <div class="card">
+                    <div class="card-body">
+                        <h4 class="card-title"><i class="mdi mdi-filter mr-1 text-primary"></i>Query Criteria</h4>
+                        <div class="row">
+                            <div class="col-md-4 form-group">
+                                <label class="font-weight-bold">Status</label>
+                                <select class="form-control" id="rep-status">
+                                    <option value="all">All Statuses</option>
+                                    <option value="active">Active</option>
+                                    <option value="closed">Closed</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4 form-group">
+                                <label class="font-weight-bold">Start Date From</label>
+                                <input type="date" class="form-control" id="rep-start">
+                            </div>
+                            <div class="col-md-4 form-group">
+                                <label class="font-weight-bold">Start Date To</label>
+                                <input type="date" class="form-control" id="rep-end">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Aggregations Box -->
+        <div class="row grid-margin" id="summary-boxes">
+            <div class="col-sm-3 stretch-card mb-2 mb-sm-0">
+                <div class="card card-body text-center bg-light text-dark py-4 border">
+                    <p class="text-muted text-small mb-1">Matching Loans</p>
+                    <h3 class="font-weight-bold" id="sum-count">{{ matching_loan }}</h3>
+                </div>
+            </div>
+            <div class="col-sm-3 stretch-card mb-2 mb-sm-0">
+                <div class="card card-body text-center bg-light text-dark py-4 border">
+                    <p class="text-muted text-small mb-1">Disbursed Principal</p>
+                    <h3 class="font-weight-bold text-primary" id="sum-principal">
+                        ${{ "%.2f"|format(disbursed_principal) }}</h3>
+                </div>
+            </div>
+            <div class="col-sm-3 stretch-card mb-2 mb-sm-0">
+                <div class="card card-body text-center bg-light text-dark py-4 border">
+                    <p class="text-muted text-small mb-1">Expected Interest</p>
+                    <h3 class="font-weight-bold text-warning" id="sum-interest">
+                        ${{ "%.2f"|format(expected_interest) }}</h3>
+                </div>
+            </div>
+            <div class="col-sm-3 stretch-card">
+                <div class="card card-body text-center bg-light text-dark py-4 border">
+                    <p class="text-muted text-small mb-1">Collected Repayments</p>
+                    <h3 class="font-weight-bold text-success" id="sum-collected">
+                        ${{ "%.2f"|format(collected_repayment) }}</h3>
+                </div>
+            </div>
+        </div>
+
+        <!-- Filtered Results Table -->
+        <div class="row">
+            <div class="col-12 grid-margin stretch-card">
+                <div class="card">
+                    <div class="card-body">
+                        <h4 class="card-title">Audited Loan Records</h4>
+                        <div class="table-responsive">
+                            <table class="table table-striped table-hover">
+                                <thead>
+                                <tr>
+                                    <th> Borrower Name</th>
+                                    <th> Principal</th>
+                                    <th> Rate</th>
+                                    <th> Tenure</th>
+                                    <th> Total Repayable</th>
+                                    <th> Status</th>
+                                    <th> Start Date</th>
+                                </tr>
+                                </thead>
+                                <tbody id="report-table-body">
+                                {% if audited_loan_records is none %}
+                                    <tr>
+                                        <td colspan="8" class="text-center text-muted py-4">No loan records match the
+                                            query.
+                                        </td>
+                                    </tr>
+                                {% else %}
+                                    {% for l in audited_loan_records %}
+                                        <tr>
+                                            <td class="font-weight-bold">{{ l.email }}</td>
+                                            <td>${{ "%.2f"|format(l.amount) }}</td>
+                                            <td>{{ "%.0f"|format(l.interest_rate) }}%</td>
+                                            <td>{{ "%.0f"|format(l.tenure_month) }} mo</td>
+                                            <td class="font-weight-bold text-dark">
+                                                ${{ "%.2f"|format(l.total_payable) }}
+                                            </td>
+                                            <td><span
+                                                    class="badge badge-{{ l.status|lower }}">{{ l.status|lower }}</span>
+                                            </td>
+                                            <td>{{ l.start_date.strftime('%Y-%m-%d') }}</td>
+                                        </tr>
+                                    {% endfor %}
+                                {% endif %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+    <!-- content-wrapper ends -->
+    <footer class="footer" id="footer"></footer>
+
+    {#    <script>#}
+    {#        const tbody = document.getElementById('report-table-body');#}
+    {#        const filterStatus = document.getElementById('rep-status');#}
+    {#        const startDate = document.getElementById('rep-start');#}
+    {#        const endDate = document.getElementById('rep-end');#}
+    {##}
+    {#        const sumCount = document.getElementById('sum-count');#}
+    {#        const sumPrincipal = document.getElementById('sum-principal');#}
+    {#        const sumInterest = document.getElementById('sum-interest');#}
+    {#        const sumCollected = document.getElementById('sum-collected');#}
+    {##}
+    {#        // Full, unfiltered dataset passed in from the server.#}
+    {#        const list = {{ list | tojson }};#}
+    {##}
+    {#        function money(n) {#}
+    {#            return `$${Number(n || 0).toFixed(2)}`;#}
+    {#        }#}
+    {##}
+    {#        function get_filtered() {#}
+    {#            const status = filterStatus.value; // "All", "Pending", "Active", "Closed"#}
+    {#            const start = startDate.value;     // "YYYY-MM-DD" or ""#}
+    {#            const end = endDate.value;         // "YYYY-MM-DD" or ""#}
+    {##}
+    {#            return list.filter(l => {#}
+    {#                const statusMatch = (status === 'All') ||#}
+    {#                    (l.status || '').toLowerCase() === status.toLowerCase();#}
+    {##}
+    {#                const loanTime = new Date(l.start_date).getTime();#}
+    {#                const startMatch = !start || loanTime >= new Date(start).getTime();#}
+    {#                const endMatch = !end || loanTime <= new Date(end + 'T23:59:59').getTime();#}
+    {##}
+    {#                return statusMatch && startMatch && endMatch;#}
+    {#            });#}
+    {#        }#}
+    {##}
+    {#        function render_report() {#}
+    {#            const filtered = get_filtered();#}
+    {##}
+    {#            if (filtered.length > 0) {#}
+    {#                tbody.innerHTML = filtered.map(l => `#}
+    {#                    <tr>#}
+    {#                        <td class="font-weight-bold">${l.name}</td>#}
+    {#                        <td>$${l.principal}</td>#}
+    {#                        <td>${l.rate}%</td>#}
+    {#                        <td>${l.tenure} mo</td>#}
+    {#                        <td class="font-weight-bold text-dark">$${l.total_repayable}</td>#}
+    {#                        <td><span class="badge badge-pending">${l.status}</span></td>#}
+    {#                        <td>${l.start_date}</td>#}
+    {#                    </tr>#}
+    {#                `).join('');#}
+    {#            } else {#}
+    {#                tbody.innerHTML = `<tr>#}
+    {#                    <td colspan="8" class="text-center text-muted py-4">No loan records match the query.</td>#}
+    {#                </tr>`;#}
+    {#            }#}
+    {##}
+    {#            // Update summary boxes.#}
+    {#            // NOTE: "Expected Interest" assumes total_repayable - principal.#}
+    {#            // "Collected Repayments" assumes each record may have an optional#}
+    {#            // l.collected field; adjust the field name if yours differs.#}
+    {#            const count = filtered.length;#}
+    {#            const principalSum = filtered.reduce((sum, l) => sum + Number(l.principal || 0), 0);#}
+    {#            const interestSum = filtered.reduce((sum, l) => sum + (Number(l.total_repayable || 0) - Number(l.principal || 0)), 0);#}
+    {#            const collectedSum = filtered.reduce((sum, l) => sum + Number(l.collected || 0), 0);#}
+    {##}
+    {#            sumCount.textContent = count;#}
+    {#            sumPrincipal.textContent = money(principalSum);#}
+    {#            sumInterest.textContent = money(interestSum);#}
+    {#            sumCollected.textContent = money(collectedSum);#}
+    {#        }#}
+    {##}
+    {#        render_report();#}
+    {#    </script>#}
+{% endblock %}

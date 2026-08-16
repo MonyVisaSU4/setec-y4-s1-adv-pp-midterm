@@ -1,0 +1,129 @@
+{% extends "layouts/base.html" %}
+
+{% block contents %}
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for message, category in messages %}
+                <div style="position: fixed;
+                            top: 20px;
+                            left: 50%;
+                            transform: translateX(-50%);
+                            padding: 14px 24px;
+                            border-radius: 8px;
+                            background-color: green;
+                            color: white;
+                            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+                            font-family: Arial, sans-serif;
+                            font-size: 15px;
+                            font-weight: 500;
+                            z-index: 9999;" class="alert-{{ category }}">
+                    {{ message }}
+                </div>
+                <script>
+                    setTimeout(() => {
+                        window.location.href = "{{ url_for('admin.borrower') }}";
+                    }, 1000)
+                </script>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+    <div class="content-wrapper">
+        <!-- Page Header -->
+        <div class="page-header">
+            <h3 class="page-title">
+              <span class="page-title-icon bg-gradient-primary text-white mr-2">
+                <i class="mdi mdi-lead-pencil"></i>
+              </span> Edit Borrower Profile
+            </h3>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{{ url_for('admin.borrower') }}">Borrowers</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">Edit</li>
+                </ol>
+            </nav>
+        </div>
+
+        <!-- Alert area -->
+        <div id="alert-container" class="alert alert-danger d-none" role="alert"></div>
+
+        <!-- Form Card -->
+        <div class="row">
+            <div class="col-md-8 grid-margin stretch-card mx-auto">
+                <div class="card">
+                    <div class="card-body">
+                        <h4 class="card-title" id="form-title">Edit Borrower Details</h4>
+                        <p class="card-description"> Update borrower profile information and account credentials. </p>
+
+                        <form class="forms-sample" id="editCustomerForm" method="POST"
+                              action="{{ url_for('admin.update_borrower', id=id) }}">
+                            <h5 class="text-primary mb-3 mt-4"><i class="mdi mdi-account-card-details mr-2"></i>Personal
+                                Profile</h5>
+
+                            <div class="form-group row">
+                                <label for="national_id"
+                                       class="col-sm-3 col-form-label font-weight-bold">Nationality</label>
+                                <div class="col-sm-9">
+                                    <input type="text" value="{{ borrowers.national_id }}" class="form-control"
+                                           id="national_id" name="nationality" required>
+                                </div>
+                            </div>
+
+                            <div class="form-group row">
+                                <label for="phone" class="col-sm-3 col-form-label font-weight-bold">Phone Number</label>
+                                <div class="col-sm-9">
+                                    <input type="tel" value="{{ borrowers.phone }}" class="form-control" id="phone"
+                                           name="phone" required>
+                                </div>
+                            </div>
+
+                            <div class="form-group row">
+                                <label for="address" class="col-sm-3 col-form-label font-weight-bold">Home
+                                    Address</label>
+                                <div class="col-sm-9">
+                                    <textarea id="address" class="form-control" id="address" name="address" rows="3"
+                                              required></textarea>
+                                </div>
+                                <script>
+                                    document.getElementById('address').value = "{{ borrowers.address }}"
+                                </script>
+                            </div>
+
+                            <hr class="my-4">
+                            <h5 class="text-success mb-3"><i class="mdi mdi-key-variant mr-2"></i>Portal Login
+                                Credentials</h5>
+
+                            <div class="form-group row">
+                                <label for="username" class="col-sm-3 col-form-label font-weight-bold">Login
+                                    Email</label>
+                                <div class="col-sm-9">
+                                    <input value="{{ borrowers.user.email }}" type="text"
+                                           class="form-control text-muted" id="email" readonly>
+                                    <small class="text-muted">Email cannot be changed.</small>
+                                </div>
+                            </div>
+
+                            <div class="form-group row">
+                                <label for="password" class="col-sm-3 col-form-label font-weight-bold">New
+                                    Password</label>
+                                <div class="col-sm-9">
+                                    <input type="password" class="form-control" id="password" name="password"
+                                           placeholder="Leave blank to keep current password">
+                                </div>
+                            </div>
+
+                            <div class="form-group row mt-4">
+                                <div class="col-sm-9 offset-sm-3">
+                                    <button type="submit" class="btn btn-gradient-primary mr-2">Update Account</button>
+                                    <a href="{{ url_for('admin.borrower') }}" class="btn btn-light">Cancel</a>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+    <!-- content-wrapper ends -->
+    <footer class="footer" id="footer"></footer>
+{% endblock %}

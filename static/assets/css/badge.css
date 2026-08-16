@@ -1,0 +1,9 @@
+.badge-closed {
+    color: #ffffff;
+    background: red;
+}
+
+.badge-active {
+    color: #ffffff;
+    background: green;
+}

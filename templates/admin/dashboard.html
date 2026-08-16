@@ -1,0 +1,157 @@
+{% extends "layouts/base.html" %}
+
+{% block contents %}
+    {% include "partials/modals/repay.html" %}
+    <div class="content-wrapper">
+        <!-- Page Header -->
+        <div class="page-header">
+            <h3 class="page-title">
+              <span class="page-title-icon bg-gradient-primary text-white mr-2">
+                <i class="mdi mdi-home"></i>
+              </span> Admin Dashboard
+            </h3>
+            <nav aria-label="breadcrumb">
+                <ul class="breadcrumb">
+                    <li class="breadcrumb-item active" aria-current="page">
+                        <span></span>Overview <i
+                            class="mdi mdi-alert-circle-outline icon-sm text-primary align-middle"></i>
+                    </li>
+                </ul>
+            </nav>
+        </div>
+
+        <!-- Stats Cards -->
+        <div class="row">
+            <div class="col-md-3 stretch-card grid-margin">
+                <div class="card bg-gradient-info card-img-holder text-white">
+                    <div class="card-body">
+                        <img src="{{ url_for('static', filename='assets/images/dashboard/circle.svg') }}"
+                             class="card-img-absolute" alt="circle-image"/>
+                        <h4 class="font-weight-normal mb-3">Total Borrowers <i
+                                class="mdi mdi-account-multiple mdi-24px float-right"></i></h4>
+                        <h2 class="mb-5" id="stat-customers">{{ total_borrower }}</h2>
+                        <p class="card-text">Registered profiles</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 stretch-card grid-margin">
+                <div class="card bg-gradient-primary card-img-holder text-white">
+                    <div class="card-body">
+                        <img src="{{ url_for('static', filename='assets/images/dashboard/circle.svg') }}"
+                             class="card-img-absolute" alt="circle-image"/>
+                        <h4 class="font-weight-normal mb-3">Active Loans <i
+                                class="mdi mdi-cash-multiple mdi-24px float-right"></i></h4>
+                        <h2 class="mb-5" id="stat-active-loans">{{ active_loan }}</h2>
+                        <p class="card-text">Currently open loans</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 stretch-card grid-margin">
+                <div class="card bg-gradient-success card-img-holder text-white">
+                    <div class="card-body">
+                        <img src="{{ url_for('static', filename='assets/images/dashboard/circle.svg') }}"
+                             class="card-img-absolute" alt="circle-image"/>
+                        <h4 class="font-weight-normal mb-3">Total Disbursed <i
+                                class="mdi mdi-trending-up mdi-24px float-right"></i></h4>
+                        <h2 class="mb-5" id="stat-disbursed">${{ "%.2f"|format(total_disbursed or 0) }}</h2>
+                        <p class="card-text">Active + Closed principal</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 stretch-card grid-margin">
+                <div class="card bg-gradient-danger card-img-holder text-white">
+                    <div class="card-body">
+                        <img src="{{ url_for('static', filename='assets/images/dashboard/circle.svg') }}"
+                             class="card-img-absolute" alt="circle-image"/>
+                        <h4 class="font-weight-normal mb-3">Total Collected <i
+                                class="mdi mdi-trending-down mdi-24px float-right"></i></h4>
+                        <h2 class="mb-5" id="stat-collected">${{ "%.2f"|format(total_collected or 0) }}</h2>
+                        <p class="card-text">Repayments received</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Charts and Lists -->
+        <div class="row">
+            <!-- Chart Card -->
+            <div class="col-md-7 grid-margin stretch-card">
+                <div class="card">
+                    <div class="card-body">
+                        <div class="clearfix">
+                            <h4 class="card-title float-left">Financial Overview</h4>
+                            <div id="visit-sale-legend"
+                                 class="rounded-legend legend-horizontal legend-top-right float-right"></div>
+                        </div>
+                        <canvas id="disbursementChart" class="mt-4" style="height:250px"></canvas>
+                    </div>
+                </div>
+            </div>
+            <!-- Loan Status breakdown card -->
+            <div class="col-md-5 grid-margin stretch-card">
+                <div class="card">
+                    <div class="card-body">
+                        <h4 class="card-title">Loan Status Distribution</h4>
+                        <canvas id="statusPieChart" class="mt-4" style="height:250px"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Overdue Installments -->
+        <div class="row">
+            <div class="col-12 grid-margin">
+                <div class="card">
+                    <div class="card-body">
+                        <h4 class="card-title text-danger"><i class="mdi mdi-alert-octagon mr-2"></i>Overdue
+                            Installments Action List</h4>
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                <tr>
+                                    <th> Borrower</th>
+                                    <th> Due Date</th>
+                                    <th> Amount Due</th>
+                                    <th> Amount Paid</th>
+                                    <th> Status</th>
+                                    <th> Action</th>
+                                </tr>
+                                </thead>
+                                <tbody id="overdue-table-body" name="overdue-table-body">
+                                {% if overdue_installment|length == 0 %}
+                                    <tr>
+                                        <td colspan="8" class="text-center text-muted py-4">
+                                            <i class="mdi mdi-check-circle-outline mr-2 text-success"
+                                               style="font-size: 1.2rem;"></i>
+                                            No overdue installments at this moment.
+                                        </td>
+                                    </tr>
+                                {% else %}
+                                    {% for o in overdue_installment %}
+                                        <tr>
+                                            <td class="font-weight-bold">{{ o.email }}</td>
+                                            <td class="text-danger font-weight-bold">{{ o.due_date }}</td>
+                                            <td>${{ "%.2f"|format(o.amount_due) }}</td>
+                                            <td>${{ "%.2f"|format(o.amount_paid) }}</td>
+                                            <td><label class="badge badge-danger">Overdue</label></td>
+                                            <td>
+                                                <button class="btn btn-sm btn-gradient-warning"
+                                                        id="repay-button"
+                                                        onclick="handleRepayment({{ o.id }})">
+                                                    Repay
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                {% endif %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- content-wrapper ends -->
+    <footer class="footer" id="footer"></footer>
+{% endblock %}
