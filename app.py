@@ -2,7 +2,7 @@ from datetime import date
 
 from apscheduler.schedulers.background import BackgroundScheduler
 from flask import Flask, render_template, request, redirect, url_for, session
-from flask_login import current_user, login_user
+from flask_login import current_user, login_user, logout_user
 from werkzeug.security import check_password_hash
 
 from config import Config
@@ -97,6 +97,10 @@ def root():
 
 @app.route('/logout', methods=['GET'])
 def logout():
+    # BUG FIX: Previously only session.clear() was called, which did not cleanly log out
+    # Flask-Login's current_user context. Calling logout_user() ensures the session cookie,
+    # remember cookie, and Flask-Login user tracking are completely cleared.
+    logout_user()
     session.clear()
     return redirect(url_for('root'))
 

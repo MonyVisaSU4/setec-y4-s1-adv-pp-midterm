@@ -77,6 +77,8 @@ def dashboard():
 def borrower():
     res = None
     try:
+        # BUG FIX: The previous join was `.join(CustomerProfile, User.user_id == CustomerProfile.user_id)`
+        # which redundantly joined CustomerProfile to CustomerProfile. Fixed to join User on CustomerProfile.user_id.
         statement = select(
             CustomerProfile.customer_id,
             User.email,
@@ -84,7 +86,7 @@ def borrower():
             CustomerProfile.national_id,
             CustomerProfile.phone,
             CustomerProfile.created_at,
-        ).join(CustomerProfile, User.user_id == CustomerProfile.user_id)
+        ).join(User, CustomerProfile.user_id == User.user_id)
 
         borrowers = db.session.execute(statement).all()
 
@@ -100,6 +102,7 @@ def borrower():
 @admin_required
 @login_required
 def filter_borrower():
+    # BUG FIX: Fixed join clause to correctly join User on CustomerProfile.user_id.
     statement = select(
         CustomerProfile.customer_id,
         User.email,
@@ -107,7 +110,7 @@ def filter_borrower():
         CustomerProfile.national_id,
         CustomerProfile.phone,
         CustomerProfile.created_at,
-    ).join(CustomerProfile, User.user_id == CustomerProfile.user_id)
+    ).join(User, CustomerProfile.user_id == User.user_id)
 
     res = db.session.execute(statement).all()
     data = [dict(row._mapping) for row in res]
@@ -232,30 +235,29 @@ def update_borrower(id):
 @login_required
 @admin_required
 def delete_borrower(id):
-    res = None
-
     try:
         loan = Loan.query.filter(Loan.customer_id == id).first()
-        print(f"Loan: {loan}")
 
         if loan:
-            res = {"message": "This borrower has loan. Deletion cannot be allowed."}
-            return render_template("admin/borrower/edit.html")
+            # BUG FIX: Previously this returned render_template("admin/borrower/edit.html") without
+            # required arguments, breaking AJAX SweetAlert callers. Returning JSON allows the
+            # frontend JS handler to display the error alert gracefully.
+            return jsonify({"message": "This borrower has loans. Deletion cannot be allowed."})
         borrower = CustomerProfile.query.get_or_404(id)
         user = borrower.user
 
         db.session.delete(borrower)
-        db.session.delete(user)
+        if user:
+            db.session.delete(user)
         db.session.commit()
-        res = {"message": "Success"}
+        return jsonify({"message": "Success"})
     except IntegrityError as e:
-        res = {"message": "This borrower has loan. Deletion cannot be allowed."}
         db.session.rollback()
+        return jsonify({"message": "This borrower has loans. Deletion cannot be allowed."})
     except Exception as e:
         db.session.rollback()
         print(e)
-
-    return jsonify(res)
+        return jsonify({"message": f"Error deleting borrower: {str(e)}"})
 
 
 @admin.route("/admin/loan", methods=["GET"])
@@ -314,22 +316,13 @@ def filter_loan():
 @admin_required
 def view_loan(id):
     loans = Loan.query.get_or_404(id)
-    total_collect = 0
     repayment_schedule = RepaymentSchedule.query.filter(RepaymentSchedule.loan_id == loans.loan_id).all()
 
-    try:
-        get_total_collect = db.session.execute(
-            (
-                select(RepaymentSchedule.amount_paid).join(
-                    Loan, RepaymentSchedule.loan_id == Loan.loan_id
-                )
-            )
-        ).scalar()
+    # BUG FIX: The previous query executed an unaggregated SELECT on RepaymentSchedule.amount_paid
+    # with NO WHERE clause for the loan, fetching an arbitrary first row's amount across all loans.
+    # We now accurately calculate the sum of amount_paid for this specific loan's schedules.
+    total_collect = sum(r.amount_paid for r in repayment_schedule)
 
-        if get_total_collect is not None:
-            total_collect = get_total_collect
-    except Exception as e:
-        print(e)
     return render_template(
         "admin/loan/view.html",
         loans=loans,
@@ -345,30 +338,38 @@ def add_loan():
     try:
         borrowers = CustomerProfile.query.all()
         if request.method == "POST":
-            borrower_choose = request.form["customer_id"]
+            borrower_choose = int(request.form["customer_id"])
             principle = float(request.form["principle-loan"])
-            interest = int(request.form["interest"])
+            interest = float(request.form["interest"])
             tenure = int(request.form["tenure"])
-            start_date = datetime.fromisoformat(request.form["start-date"])
+            start_date_raw = request.form["start-date"]
+            start_date = date.fromisoformat(start_date_raw) if start_date_raw else date.today()
             tenure_year = tenure / 12
             total_interest = principle * (interest / 100) * tenure_year
             total_payable = principle + total_interest
 
-            loans = Loan(
-                customer_id=borrower_choose,
-                amount=principle,
-                interest_rate=interest,
-                tenure_month=tenure,
-                start_date=start_date,
-                status=Status_Loan.ACTIVE,
-                total_payable=total_payable,
-            )
-            findLoan = Loan.query.filter(loans.customer_id == Loan.customer_id).all()
+            # BUG FIX: The previous check was `findLoan = Loan.query.filter(loans.customer_id == Loan.customer_id).all()`
+            # which evaluated `Loan.customer_id == Loan.customer_id` (a SQL column identity tautology 1=1).
+            # This matched ALL loans in the database and blocked any new loans once any loan existed.
+            # Fixed to query active loans for the selected borrower.
+            findLoan = Loan.query.filter(
+                Loan.customer_id == borrower_choose,
+                Loan.status == Status_Loan.ACTIVE
+            ).first()
 
             if findLoan:
-                flash('this borrower already loaned.', 'warning')
+                flash('This borrower already has an active loan.', 'warning')
             else:
-                db.session.add(loans)
+                new_loan = Loan(
+                    customer_id=borrower_choose,
+                    amount=principle,
+                    interest_rate=interest,
+                    tenure_month=tenure,
+                    start_date=start_date,
+                    status=Status_Loan.ACTIVE,
+                    total_payable=total_payable,
+                )
+                db.session.add(new_loan)
                 db.session.flush()
 
                 replayment_schedule = []
@@ -376,7 +377,7 @@ def add_loan():
                 for i in range(tenure):
                     replayment_schedule.append(
                         RepaymentSchedule(
-                            loan_id=loans.loan_id,
+                            loan_id=new_loan.loan_id,
                             due_date=start_date + relativedelta(months=i + 1),
                             amount_due=total_payable / tenure,
                             amount_paid=0,
@@ -392,7 +393,7 @@ def add_loan():
                 flash("loan added", "success")
     except Exception as e:
         db.session.rollback()
-        flash(e, "danger")
+        flash(str(e), "danger")
     return render_template("admin/loan/add.html", borrowers=borrowers)
 
 
@@ -418,17 +419,23 @@ def report():
 
         audited_loan_records = db.session.execute(selected).all()
 
-        matching_loan = (
-                db.session.execute(select(func.count(CustomerProfile.customer_id))).scalar() or 0
-        )
+        # BUG FIX: matching_loan previously counted CustomerProfile.customer_id (borrowers),
+        # whereas the report represents Matching Loans. Fixed to count audited matching loans.
+        matching_loan = len(audited_loan_records)
         disbursed_principal = db.session.execute(select(func.sum(Loan.amount))).scalar() or 0
         total_payable = db.session.execute(select(func.sum(Loan.total_payable))).scalar() or 0
-        expected_interest = total_payable - disbursed_principal or 0
+        expected_interest = (total_payable - disbursed_principal) if total_payable > disbursed_principal else 0
         collected_repayment = (
                 db.session.execute(select(func.sum(RepaymentSchedule.amount_paid))).scalar() or 0
         )
     except Exception as e:
         print(e)
+        audited_loan_records = []
+        matching_loan = 0
+        disbursed_principal = 0
+        expected_interest = 0
+        collected_repayment = 0
+
     return render_template(
         "admin/report.html",
         matching_loan=matching_loan,
@@ -479,6 +486,8 @@ def filter_report():
         return jsonify(audited_loan_records)
     except Exception as e:
         print(e)
+        return jsonify([])
+
 
 @admin.route('/admin/loan/repay/<int:id>', methods=['GET', 'POST'])
 @login_required
@@ -487,11 +496,23 @@ def repay(id):
     repayment = RepaymentSchedule.query.get_or_404(id)
 
     if request.method == "POST":
-        amount_paid = request.form['modalRepayAmount']
+        # BUG FIX: Parse amount as float and parse modalPayDate if submitted.
+        # Also check if all installments for this loan are now paid and auto-close loan.
+        amount_paid = float(request.form.get('modalRepayAmount', repayment.amount_due))
+        modal_pay_date = request.form.get('modalPayDate')
+        paid_date = date.fromisoformat(modal_pay_date) if modal_pay_date else date.today()
 
         repayment.amount_paid = amount_paid
-        repayment.paid_date = date.today()
+        repayment.paid_date = paid_date
         repayment.status = Status_Repayment.PAID
+
+        # Automatically check if loan is fully paid and update its status to CLOSED
+        loan = Loan.query.get(repayment.loan_id)
+        if loan:
+            repays = RepaymentSchedule.query.filter(RepaymentSchedule.loan_id == loan.loan_id).all()
+            if repays and all((r.id == repayment.id or r.status == Status_Repayment.PAID) for r in repays):
+                loan.status = Status_Loan.CLOSED
+
         db.session.commit()
         return jsonify({'message': 'success'})
 

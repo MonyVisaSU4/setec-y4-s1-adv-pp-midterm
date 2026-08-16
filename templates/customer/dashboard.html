@@ -53,7 +53,7 @@
                                 class="mdi mdi-calendar-clock mdi-24px float-right"></i></h4>
                         <h2 class="mb-3" id="cust-stat-due-amount">${{ "%.2f"|format(next_due_installment) }}</h2>
                         <p class="card-text mb-0">Due Date: <span class="font-weight-bold"
-                                                                  id="cust-stat-due-date">{{ due_date.strftime('%Y-%m-%d') }}</span>
+                                                                  id="cust-stat-due-date">{{ due_date.strftime('%Y-%m-%d') if due_date else 'N/A' }}</span>
                         </p>
                     </div>
                 </div>
@@ -83,7 +83,7 @@
                                 </tr>
                                 </thead>
                                 <tbody id="my-loans-table-body">
-                                {% if my_loan_portfolio is not none %}
+                                {% if my_loan_portfolio %}
                                     {% for l in my_loan_portfolio %}
                                         <tr>
                                             <td class="font-weight-bold"> ${{ "%.2f"|format(l.priciple_amount) }} </td>
@@ -98,10 +98,10 @@
                                             <td><span
                                                     class="badge badge-{{ l.status|lower }}">{{ l.status|lower }}</span>
                                             </td>
-                                            <td> {{ l.start_date.strftime('%Y-%m-%d') }}</td>
+                                            <td> {{ l.start_date.strftime('%Y-%m-%d') if l.start_date else '-' }}</td>
 
                                             <td>
-                                                <a href="{{ url_for('customer.schedule', id=id) }}"
+                                                <a href="{{ url_for('customer.schedule', id=l.loan_id) }}"
                                                    class="btn btn-sm btn-gradient-info btn-icon-text">
                                                     <i class="mdi mdi-eye mr-1"></i>View Schedule
                                                 </a>
