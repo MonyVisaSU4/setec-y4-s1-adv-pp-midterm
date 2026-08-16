@@ -41,5 +41,18 @@ class User(UserMixin, db.Model):
     def get_password(self):
         return self.password_hash
 
+    def to_dict(self, include_profile=False):
+        data = {
+            'user_id': self.user_id,
+            'email': self.email,
+            'role': self.role.value,
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+            'is_active': self.is_active,
+            # deliberately excluding password_hash
+        }
+        if include_profile and self.customer_profiles:
+            data['customer_profile'] = self.customer_profiles.to_dict()
+        return data
+
     def check_password(self, password):
         return check_password_hash(self.get_password(), password)

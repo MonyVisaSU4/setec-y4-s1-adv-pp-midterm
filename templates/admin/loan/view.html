@@ -1,6 +1,7 @@
 {% extends "layouts/base.html" %}
 
 {% block contents %}
+    {% include "partials/modals/repay.html" %}
     <div class="content-wrapper">
         <!-- Page Header -->
         <div class="page-header">
@@ -124,7 +125,9 @@
                                                 <td>{{ l.paid_date.strftime('%Y-%m-%d') }}</td>
                                             {% endif %}
                                             <td>
-                                                <button class="btn btn-sm btn-gradient-warning">
+                                                <button class="btn btn-sm btn-gradient-warning"
+                                                        id="repay-button"
+                                                        onclick="handleRepayment({{ l.id }})">
                                                     Repay
                                                 </button>
                                             </td>
@@ -138,7 +141,6 @@
                 </div>
             </div>
         </div>
-
     </div>
     <!-- content-wrapper ends -->
     <footer class="footer" id="footer"></footer>

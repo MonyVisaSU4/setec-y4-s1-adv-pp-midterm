@@ -1,6 +1,7 @@
 {% extends "layouts/base.html" %}
 
 {% block contents %}
+    {% include "partials/modals/repay.html" %}
     <div class="content-wrapper">
         <!-- Page Header -->
         <div class="page-header">
@@ -109,8 +110,6 @@
                                 <thead>
                                 <tr>
                                     <th> Borrower</th>
-                                    <th> Loan ID</th>
-                                    <th> Inst #</th>
                                     <th> Due Date</th>
                                     <th> Amount Due</th>
                                     <th> Amount Paid</th>
@@ -119,7 +118,7 @@
                                 </tr>
                                 </thead>
                                 <tbody id="overdue-table-body" name="overdue-table-body">
-                                {% if overdue_loan is none %}
+                                {% if overdue_installment|length == 0 %}
                                     <tr>
                                         <td colspan="8" class="text-center text-muted py-4">
                                             <i class="mdi mdi-check-circle-outline mr-2 text-success"
@@ -128,18 +127,18 @@
                                         </td>
                                     </tr>
                                 {% else %}
-                                    {% for o in overdue_loan %}
+                                    {% for o in overdue_installment %}
                                         <tr>
-                                            <td class="font-weight-bold">{{ o.name }}</td>
-                                            <td><code>{{ o.loan_id }}</code></td>
-                                            <td>{{ o.inst }}</td>
+                                            <td class="font-weight-bold">{{ o.email }}</td>
                                             <td class="text-danger font-weight-bold">{{ o.due_date }}</td>
-                                            <td>{{ o.amount_due }}</td>
-                                            <td>{{ o.amount_paid }}</td>
+                                            <td>${{ "%.2f"|format(o.amount_due) }}</td>
+                                            <td>${{ "%.2f"|format(o.amount_paid) }}</td>
                                             <td><label class="badge badge-danger">Overdue</label></td>
                                             <td>
-                                                <button class="btn btn-sm btn-gradient-warning">
-                                                    <i class="mdi mdi-cash-usd mr-1"></i>Repay
+                                                <button class="btn btn-sm btn-gradient-warning"
+                                                        id="repay-button"
+                                                        onclick="handleRepayment({{ o.id }})">
+                                                    Repay
                                                 </button>
                                             </td>
                                         </tr>
@@ -152,7 +151,6 @@
                 </div>
             </div>
         </div>
-
     </div>
     <!-- content-wrapper ends -->
     <footer class="footer" id="footer"></footer>

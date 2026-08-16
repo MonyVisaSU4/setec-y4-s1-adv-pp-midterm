@@ -1,254 +1,331 @@
-# Loan Management System
+# Loan Management System (Loan-MGM)
 
-A comprehensive web application for managing loans, borrowers, and repayment schedules. Built with Python and Flask, this system provides dual-role access for administrators and customers to manage loans efficiently.
+A full-stack, enterprise-grade Financial Loan Management System built with **Python**, **Flask**, and **SQLAlchemy**. This platform provides role-based access control (RBAC) for **Administrators** and **Borrowers/Customers**, automated background loan status auditing via **APScheduler**, automated repayment amortization scheduling, and dynamic real-time reporting.
 
-## Overview
+---
 
-The Loan Management System is a full-featured financial management application that enables:
+## Table of Contents
 
-- **Admin Dashboard**: Comprehensive oversight of all loans, borrowers, and financial metrics
-- **Customer Portal**: Customers can view their loan portfolio and repayment schedules
-- **Loan Management**: Create, update, and track loans with automated repayment scheduling
-- **Repayment Tracking**: Monitor payment status and overdue installments
-- **User Authentication**: Secure login system with role-based access control
+1. [System Architecture & Overview](#system-architecture--overview)
+2. [Technology Stack & Where It Is Used](#technology-stack--where-it-is-used)
+3. [Key Modules & Implementation Details](#key-modules--implementation-details)
+4. [Database Schema & Data Models](#database-schema--data-models)
+5. [Loan Calculation & Amortization Formula](#loan-calculation--amortization-formula)
+6. [Automated Background Schedulers](#automated-background-schedulers)
+7. [API & Route Directory](#api--route-directory)
+8. [Project Directory Structure](#project-directory-structure)
+9. [Installation & Setup Guide](#installation--setup-guide)
+10. [Default Credentials & Usage](#default-credentials--usage)
 
-## Key Features
+---
 
-### Admin Features
-- Dashboard with key financial metrics (total borrowers, active loans, disbursed amounts, collected amounts)
-- Manage borrowers and their profiles
-- Create and manage loans
-- Track repayment schedules and overdue payments
-- Generate reports and audit logs
-- View borrower information and loan history
+## System Architecture & Overview
 
-### Customer Features
-- Personal dashboard with loan portfolio overview
-- View active loans and their details
-- Access repayment schedules
-- Track payment history and remaining balance
-- View upcoming due installments
-- Update profile information
+The Loan Management System is organized as a modular Flask MVC application using Blueprints, declarative SQLAlchemy 2.0 ORM mappings, secure session management, and scheduled background workers.
 
-### Core Functionality
-- **User Management**: Multi-role authentication (Admin & Customer)
-- **Loan Processing**: Complete loan lifecycle management
-- **Repayment Scheduling**: Automatic calculation of EMI and repayment schedules
-- **Financial Tracking**: Monitor disbursements, collections, and outstanding amounts
+```mermaid
+graph TD
+    Client[Web Browser / Client] -->|HTTP Requests| FlaskApp[Flask Application (app.py)]
+    FlaskApp -->|Auth & Session| FlaskLogin[Flask-Login & Werkzeug Security]
+    FlaskApp -->|Admin Blueprint| AdminRoutes[routes/admin.py]
+    FlaskApp -->|Customer Blueprint| CustomerRoutes[routes/customer.py]
+    AdminRoutes -->|Role Guard| Decorators[decorators.py (@admin_required)]
+    FlaskApp -->|Scheduled Jobs (24h)| APScheduler[APScheduler Worker]
+    APScheduler -->|Audit & Update Overdue| DB[(Database / SQLite / MySQL / PostgreSQL)]
+    AdminRoutes -->|CRUD & Aggregations| Models[models/ - User, CustomerProfile, Loan, RepaymentSchedule]
+    CustomerRoutes -->|Portfolio & Schedules| Models
+    Models -->|SQLAlchemy 2.0 ORM| DB
+```
 
-## Technology Stack
+---
 
-- **Backend**: Python with Flask framework
-- **Database**: SQLAlchemy ORM with SQLite/PostgreSQL support
-- **Authentication**: Flask-Login for session management
-- **Frontend**: Jinja2 templating with Bootstrap
-- **Additional Libraries**: SQLAlchemy, python-dotenv, Werkzeug
+## Technology Stack & Where It Is Used
 
-## Project Structure
+Here is the breakdown of technologies, frameworks, and libraries implemented across the project:
+
+| Technology / Library | Version | Purpose | Implementation Location |
+| :--- | :--- | :--- | :--- |
+| **Python** | `3.11+` | Core programming language | Entire Backend |
+| **Flask** | `3.1.3` | Web Framework & Blueprint Routing | [`app.py`](file:///d:/Year4%20Semmester1/ADV%20PP/Midterm/loan-mgm/app.py), [`routes/admin.py`](file:///d:/Year4%20Semmester1/ADV%20PP/Midterm/loan-mgm/routes/admin.py), [`routes/customer.py`](file:///d:/Year4%20Semmester1/ADV%20PP/Midterm/loan-mgm/routes/customer.py) |
+| **Flask-SQLAlchemy** | `3.1.1` | ORM Integration with Flask | [`extension.py`](file:///d:/Year4%20Semmester1/ADV%20PP/Midterm/loan-mgm/extension.py), [`models/`](file:///d:/Year4%20Semmester1/ADV%20PP/Midterm/loan-mgm/models) |
+| **SQLAlchemy** | `2.0.51` | Database Mappings (`Mapped`, `mapped_column`, `relationship`, `select`, `func`, `and_`) | [`models/user.py`](file:///d:/Year4%20Semmester1/ADV%20PP/Midterm/loan-mgm/models/user.py), [`models/loan.py`](file:///d:/Year4%20Semmester1/ADV%20PP/Midterm/loan-mgm/models/loan.py), [`routes/admin.py`](file:///d:/Year4%20Semmester1/ADV%20PP/Midterm/loan-mgm/routes/admin.py) |
+| **Flask-Login** | `0.6.3` | User Authentication, Session State & `@login_required` | [`login_manager.py`](file:///d:/Year4%20Semmester1/ADV%20PP/Midterm/loan-mgm/login_manager.py), [`models/user.py`](file:///d:/Year4%20Semmester1/ADV%20PP/Midterm/loan-mgm/models/user.py), [`app.py`](file:///d:/Year4%20Semmester1/ADV%20PP/Midterm/loan-mgm/app.py#L65-L95) |
+| **Werkzeug Security** | `3.1.8` | Password hashing & verification (`generate_password_hash`, `check_password_hash`) | [`app.py`](file:///d:/Year4%20Semmester1/ADV%20PP/Midterm/loan-mgm/app.py#L81), [`routes/admin.py`](file:///d:/Year4%20Semmester1/ADV%20PP/Midterm/loan-mgm/routes/admin.py#L131), [`models/user.py`](file:///d:/Year4%20Semmester1/ADV%20PP/Midterm/loan-mgm/models/user.py#L57-L58) |
+| **APScheduler** | `3.11.3` | Background periodic automation scheduler (`BackgroundScheduler`) | [`app.py`](file:///d:/Year4%20Semmester1/ADV%20PP/Midterm/loan-mgm/app.py#L59-L63) |
+| **python-dateutil** | `2.9.0` | Calendar-accurate date arithmetic (`relativedelta`) | [`routes/admin.py`](file:///d:/Year4%20Semmester1/ADV%20PP/Midterm/loan-mgm/routes/admin.py#L380), [`routes/customer.py`](file:///d:/Year4%20Semmester1/ADV%20PP/Midterm/loan-mgm/routes/customer.py#L103) |
+| **Flask-Migrate** | `4.1.0` | Alembic-backed database schema migrations | [`extension.py`](file:///d:/Year4%20Semmester1/ADV%20PP/Midterm/loan-mgm/extension.py), [`app.py`](file:///d:/Year4%20Semmester1/ADV%20PP/Midterm/loan-mgm/app.py#L29) |
+| **python-dotenv** | `1.2.2` | Loading environment variables from `.env` file | [`config.py`](file:///d:/Year4%20Semmester1/ADV%20PP/Midterm/loan-mgm/config.py#L3-L5) |
+| **Jinja2 & HTML5** | `3.1.6` | Dynamic server-side templating with template inheritance | [`templates/`](file:///d:/Year4%20Semmester1/ADV%20PP/Midterm/loan-mgm/templates) |
+| **Bootstrap & CoreUI / CSS / JS** | Asset bundle | Admin layout, responsive tables, modal components & AJAX handlers | [`static/assets/`](file:///d:/Year4%20Semmester1/ADV%20PP/Midterm/loan-mgm/static/assets), [`templates/partials/`](file:///d:/Year4%20Semmester1/ADV%20PP/Midterm/loan-mgm/templates/partials) |
+| **Database Drivers** | Multi-DB | `sqlite3`, `mysqlclient`, `PyMySQL`, `psycopg2-binary` support | Configured via `DATABASE_URL` in [`.env`](file:///d:/Year4%20Semmester1/ADV%20PP/Midterm/loan-mgm/config.py#L10) |
+
+---
+
+## Key Modules & Implementation Details
+
+### 1. Role-Based Authentication & Access Control
+- **Location**: [`app.py`](file:///d:/Year4%20Semmester1/ADV%20PP/Midterm/loan-mgm/app.py#L65-L95), [`decorators.py`](file:///d:/Year4%20Semmester1/ADV%20PP/Midterm/loan-mgm/decorators.py), [`login_manager.py`](file:///d:/Year4%20Semmester1/ADV%20PP/Midterm/loan-mgm/login_manager.py)
+- **Implementation**:
+  - `User.role` uses `StrEnum` (`Role.ADMIN = "admin"`, `Role.CUSTOMER = "customer"`).
+  - Custom decorator [`@admin_required`](file:///d:/Year4%20Semmester1/ADV%20PP/Midterm/loan-mgm/decorators.py#L7-L17) inspects `current_user.role` and redirects non-admin users to the root login view.
+  - Root route [`/`](file:///d:/Year4%20Semmester1/ADV%20PP/Midterm/loan-mgm/app.py#L65) intelligently routes authenticated users to their corresponding dashboard (`admin.dashboard` or `customer.dashboard`).
+
+### 2. Admin Borrower Management (CRUD)
+- **Location**: [`routes/admin.py`](file:///d:/Year4%20Semmester1/ADV%20PP/Midterm/loan-mgm/routes/admin.py#L74-L259)
+- **Features**:
+  - **Listing & Filter**: Joins `CustomerProfile` with `User` table; includes an async JSON endpoint (`/admin/borrower/filter`) for dynamic table updates.
+  - **Add Borrower**: Atomic transaction creating both `User` (with hashed password) and `CustomerProfile` records with `db.session.flush()` and `db.session.commit()`.
+  - **Safe Deletion**: Validates if the customer has existing loans before permitting deletion, preventing orphaned loan records and raising integrity warnings.
+
+### 3. Automated Loan Issuance & Repayment Scheduling
+- **Location**: [`routes/admin.py`](file:///d:/Year4%20Semmester1/ADV%20PP/Midterm/loan-mgm/routes/admin.py#L341-L397)
+- **Features**:
+  - Validates active loan limits per borrower.
+  - Calculates flat interest and equal monthly installment payments.
+  - Automatically generates `N` monthly `RepaymentSchedule` entries across the loan tenure using `dateutil.relativedelta(months=i + 1)`.
+
+### 4. Installment Repayment & Collection Modal
+- **Location**: [`routes/admin.py`](file:///d:/Year4%20Semmester1/ADV%20PP/Midterm/loan-mgm/routes/admin.py#L483-L503), [`templates/partials/modals/repay.html`](file:///d:/Year4%20Semmester1/ADV%20PP/Midterm/loan-mgm/templates/partials/modals/repay.html)
+- **Features**:
+  - Fetches repayment details asynchronously via GET.
+  - Submits collected payment via POST, updating `amount_paid`, `paid_date`, and marking status as `PAID`.
+
+### 5. Financial Audit & Reporting Dashboard
+- **Location**: [`routes/admin.py`](file:///d:/Year4%20Semmester1/ADV%20PP/Midterm/loan-mgm/routes/admin.py#L26-L72), [`routes/admin.py`](file:///d:/Year4%20Semmester1/ADV%20PP/Midterm/loan-mgm/routes/admin.py#L399-L482)
+- **Features**:
+  - Real-time aggregations via SQL functions (`func.count`, `func.sum`).
+  - Tracks Total Disbursed Principal, Expected Interest, Total Collected Repayments, Active Loans, and Overdue Installments.
+  - Dynamic date-range and loan status filtering (`/admin/report/filter`).
+
+### 6. Customer Portal & Self-Service
+- **Location**: [`routes/customer.py`](file:///d:/Year4%20Semmester1/ADV%20PP/Midterm/loan-mgm/routes/customer.py)
+- **Features**:
+  - Personalized Dashboard showing active loan balance, next installment due date, and payment history.
+  - Loan portfolio list and detailed loan schedule timeline with status badges (Pending, Paid, Overdue).
+  - Customer profile view.
+
+---
+
+## Database Schema & Data Models
+
+The data layer uses SQLAlchemy 2.0 type annotations with cascade relationships.
+
+```mermaid
+erDiagram
+    users ||--o| customer_profiles : "1 to 1 (user_id)"
+    customer_profiles ||--o{ loans : "1 to Many (customer_id)"
+    loans ||--o{ repayment_schedule : "1 to Many (loan_id)"
+
+    users {
+        int user_id PK
+        string email UK
+        string password_hash
+        enum role "admin | customer"
+        datetime created_at
+        boolean is_active
+    }
+
+    customer_profiles {
+        int customer_id PK
+        int user_id FK
+        string phone
+        string address
+        string national_id
+        datetime created_at
+    }
+
+    loans {
+        int loan_id PK
+        int customer_id FK
+        float amount
+        float interest_rate
+        int tenure_month
+        date start_date
+        enum status "active | closed"
+        float total_payable
+        datetime created_at
+    }
+
+    repayment_schedule {
+        int id PK
+        int loan_id FK
+        date due_date
+        float amount_due
+        float amount_paid
+        enum status "pending | paid | overdue"
+        date paid_date
+    }
+```
+
+### Model Files:
+1. **[`models/user.py`](file:///d:/Year4%20Semmester1/ADV%20PP/Midterm/loan-mgm/models/user.py)**: Encapsulates user credentials, password hashing, and role definition.
+2. **[`models/customer_profile.py`](file:///d:/Year4%20Semmester1/ADV%20PP/Midterm/loan-mgm/models/customer_profile.py)**: Stores personal identifiers (`phone`, `address`, `national_id`).
+3. **[`models/loan.py`](file:///d:/Year4%20Semmester1/ADV%20PP/Midterm/loan-mgm/models/loan.py)**: Encapsulates principal, interest rate, term duration, and status.
+4. **[`models/repayment_schedule.py`](file:///d:/Year4%20Semmester1/ADV%20PP/Midterm/loan-mgm/models/repayment_schedule.py)**: Uses `@property status` and `_status` backing column to calculate overdue status if `due_date < today`.
+
+---
+
+## Loan Calculation & Amortization Formula
+
+The system uses flat annual rate interest calculation implemented in [`routes/admin.py`](file:///d:/Year4%20Semmester1/ADV%20PP/Midterm/loan-mgm/routes/admin.py#L349-L386):
+
+$$\text{Tenure (Years)} = \frac{\text{Tenure (Months)}}{12}$$
+
+$$\text{Total Interest} = \text{Principal Amount} \times \left(\frac{\text{Annual Interest Rate}}{100}\right) \times \text{Tenure (Years)}$$
+
+$$\text{Total Payable} = \text{Principal Amount} + \text{Total Interest}$$
+
+$$\text{Monthly Installment Due} = \frac{\text{Total Payable}}{\text{Tenure (Months)}}$$
+
+---
+
+## Automated Background Schedulers
+
+Configured using **APScheduler** in [`app.py`](file:///d:/Year4%20Semmester1/ADV%20PP/Midterm/loan-mgm/app.py#L32-L63):
+
+1. **Overdue Status Auditor (`sync_status_overdue`)**:
+   - Runs every 24 hours (`interval`, `hours=24`).
+   - Scans all non-paid installments where `due_date < date.today()` and updates their status to `Status_Repay.OVERDUE`.
+2. **Loan Closure Auditor (`sync_closed_status`)**:
+   - Runs every 24 hours (`interval`, `hours=24`).
+   - Checks active loans; if every installment schedule is marked as `PAID`, the loan status is automatically transitioned to `Status_Loan.CLOSED`.
+
+---
+
+## API & Route Directory
+
+### Authentication Routes ([`app.py`](file:///d:/Year4%20Semmester1/ADV%20PP/Midterm/loan-mgm/app.py))
+| Method | Endpoint | Description | Access |
+| :--- | :--- | :--- | :--- |
+| `GET`, `POST` | `/` | Login page & role-based dashboard redirection | Public |
+| `GET` | `/logout` | Clears user session and redirects to root | Authenticated |
+
+### Admin Endpoints ([`routes/admin.py`](file:///d:/Year4%20Semmester1/ADV%20PP/Midterm/loan-mgm/routes/admin.py))
+| Method | Endpoint | Description | Access |
+| :--- | :--- | :--- | :--- |
+| `GET` | `/admin/dashboard` | Main admin analytics & overdue installment tracker | Admin |
+| `GET` | `/admin/borrower` | List all registered borrowers | Admin |
+| `GET` | `/admin/borrower/filter` | AJAX search and filter borrower records | Admin |
+| `GET`, `POST` | `/admin/borrower/add` | Register new borrower user and customer profile | Admin |
+| `GET` | `/admin/borrower/view/<id>` | View customer profile and associated loan history | Admin |
+| `GET`, `POST` | `/admin/borrower/update/<id>` | Update borrower details and password | Admin |
+| `GET`, `POST` | `/admin/borrower/delete/<id>` | Safe delete borrower (if no active loans) | Admin |
+| `GET` | `/admin/loan` | Overview of all loan agreements | Admin |
+| `GET` | `/admin/loan/filter` | AJAX filter loans by status and start/end dates | Admin |
+| `GET`, `POST` | `/admin/loan/add` | Issue a new loan and generate monthly schedules | Admin |
+| `GET` | `/admin/loan/view/<id>` | View loan details and installment payment ledger | Admin |
+| `GET`, `POST` | `/admin/loan/repay/<id>` | AJAX modal endpoint to process installment payment | Admin |
+| `GET` | `/admin/report` | Financial audit report and metric aggregations | Admin |
+| `GET` | `/admin/report/filter` | AJAX filter audit records by date range and status | Admin |
+
+### Customer Endpoints ([`routes/customer.py`](file:///d:/Year4%20Semmester1/ADV%20PP/Midterm/loan-mgm/routes/customer.py))
+| Method | Endpoint | Description | Access |
+| :--- | :--- | :--- | :--- |
+| `GET` | `/customer/dashboard` | Customer loan balance, next installment, and status | Customer |
+| `GET` | `/customer/loan` | List of loans taken by the logged-in customer | Customer |
+| `GET` | `/customer/loan/schedule/<id>`| Detailed repayment schedule and payment timeline | Customer |
+| `GET` | `/customer/profile` | View profile details | Customer |
+
+---
+
+## Project Directory Structure
 
 ```
 loan-mgm/
-├── app.py                          # Main Flask application entry point
-├── config.py                       # Configuration management
-├── decorators.py                   # Custom decorators for authorization
-├── extension.py                    # Flask extensions initialization
-├── login_manager.py                # Login manager configuration
-├── requirements.txt                # Project dependencies
-├── models/                         # Database models
-│   ├── user.py                    # User model with roles (Admin/Customer)
-│   ├── customer_profile.py        # Customer profile information
-│   ├── loan.py                    # Loan details and status tracking
-│   └── repayment_schedule.py      # Repayment schedule and payment status
-├── routes/                        # Application routes/blueprints
-│   ├── admin.py                   # Admin-specific routes and logic
-│   └── customer.py                # Customer-specific routes and logic
-├── templates/                     # HTML templates
-│   ├── auth/                      # Login page templates
-│   ├── admin/                     # Admin dashboard and management pages
-│   ├── customer/                  # Customer portal pages
-│   ├── layouts/                   # Base layout templates
-│   └── partials/                  # Reusable template components
-└── static/                        # Static assets
-    ├── assets/
-    │   ├── css/                   # Stylesheets and SCSS
-    │   ├── js/                    # JavaScript functionality
-    │   └── images/                # Image resources
-    └── vendors/                   # Third-party libraries
+├── app.py                      # Application entry point, Blueprints & APScheduler setup
+├── config.py                   # Configuration & .env environment parser
+├── decorators.py               # Security & RBAC decorators (@admin_required)
+├── extension.py                # SQLAlchemy & Flask-Migrate instance definitions
+├── login_manager.py            # Flask-Login user_loader configuration
+├── requirements.txt            # Python dependencies
+├── .env                        # Environment configuration (DB URL, Secret Key)
+├── models/                     # Declarative SQLAlchemy ORM Data Models
+│   ├── __init__.py             # Exports User, CustomerProfile, Loan, RepaymentSchedule
+│   ├── user.py                 # User authentication model & Role enum
+│   ├── customer_profile.py     # Customer demographic profile model
+│   ├── loan.py                 # Loan entity model & Status enum
+│   └── repayment_schedule.py   # Repayment schedule model with dynamic overdue property
+├── routes/                     # Blueprint Route Handlers
+│   ├── admin.py                # Admin management, loan creation, audits, repay APIs
+│   └── customer.py             # Customer portal, schedule timeline & profile APIs
+├── templates/                  # Jinja2 HTML Templates
+│   ├── layouts/
+│   │   └── base.html           # Base layout template
+│   ├── partials/               # Reusable template components
+│   │   ├── navbar.html         # Top navigation header
+│   │   ├── sidebar-left.html   # Role-aware sidebar navigation
+│   │   ├── style-shop.html     # Stylesheet links
+│   │   ├── jsshop.html         # Core JavaScript scripts
+│   │   └── modals/
+│   │       └── repay.html      # Modal dialog for processing repayments
+│   ├── auth/
+│   │   └── login.html          # Authentication login screen
+│   ├── admin/
+│   │   ├── dashboard.html      # Admin dashboard with summary cards & overdue table
+│   │   ├── report.html         # Financial audit report
+│   │   ├── borrower/           # Borrower CRUD templates (add, edit, list, view)
+│   │   └── loan/               # Loan CRUD templates (add, list, view)
+│   └── customer/
+│       ├── dashboard.html      # Customer overview dashboard
+│       ├── loan.html           # Customer loans list
+│       ├── profile.html        # Customer profile page
+│       └── schedule.html       # Installments timeline and agreement breakdown
+└── static/
+    └── assets/                 # CSS, SCSS, JavaScript, Images, and Vendor libraries
 ```
 
-## Database Models
+---
 
-### User Model
-- `user_id`: Primary key
-- `email`: Unique user email
-- `password_hash`: Encrypted password
-- `role`: Admin or Customer
-- `created_at`: Account creation timestamp
-- `is_active`: Account status for login control
+## Installation & Setup Guide
 
-### CustomerProfile Model
-- `customer_id`: Primary key
-- `user_id`: Foreign key to User
-- `phone`: Contact number
-- `address`: Customer address
-- `national_id`: Government ID
-- `created_at`: Profile creation timestamp
+### 1. Prerequisites
+- **Python 3.10+**
+- **pip** and **virtualenv**
 
-### Loan Model
-- `loan_id`: Primary key
-- `customer_id`: Foreign key to CustomerProfile
-- `amount`: Principal loan amount
-- `interest_rate`: Annual interest rate
-- `tenure_month`: Loan duration in months
-- `start_date`: Loan commencement date
-- `status`: Active or Closed
-- `total_payable`: Total amount due (principal + interest)
-- `created_at`: Loan creation timestamp
-
-### RepaymentSchedule Model
-- Tracks individual installment payments
-- Manages payment status (Pending, Paid, Overdue)
-- Records amount due and amount paid
-- Stores due dates for each installment
-
-## Prerequisites
-
-Before running this project, ensure you have the following installed:
-
-- Python 3.8 or higher
-- Git
-- pip (Python package manager)
-
-## Getting Started
-
-Follow these steps to set up and run the project locally on your machine.
-
-### 1. Clone the Repository
-
+### 2. Clone and Setup Environment
 ```bash
-git clone -b "impl-ui/visa" <repository-url>
+# Navigate to project directory
 cd loan-mgm
-```
 
-### 2. Set Up the Virtual Environment
-
-Create a fresh virtual environment to manage dependencies locally.
-
-```bash
+# Create a virtual environment
 python -m venv .venv
-```
 
-On Windows:
-```bash
+# Activate virtual environment
+# On Windows:
 .venv\Scripts\activate
-```
-
-On macOS/Linux:
-```bash
+# On Linux/macOS:
 source .venv/bin/activate
-```
 
-### 3. Install Dependencies
-
-Ensure your virtual environment is active, then install the required packages:
-
-```bash
+# Install dependencies
 pip install -r requirements.txt
 ```
 
-### 4. Configure Environment Variables
-
-Create a `.env` file in the root directory with the following variables:
-
-```
-SECRET_KEY=your-secret-key-here
+### 3. Configure Environment Variables
+Create a `.env` file in the project root:
+```env
+SECRET_KEY=your_super_secret_session_key
 DATABASE_URL=sqlite:///loan_management.db
 FLASK_ENV=development
 FLASK_APP=app.py
 ```
+*(Supports PostgreSQL: `postgresql://user:pass@localhost:5432/loan_db` or MySQL: `mysql+pymysql://user:pass@localhost:3306/loan_db`)*
 
-**Note**: The `.env` file should not be committed to version control as it contains sensitive information.
-
-### 5. Initialize the Database
-
-The database tables are automatically created when the application starts. However, you may want to seed initial admin data for testing.
-
-### 6. Run the Application
-
-Start the Flask development server:
-
+### 4. Run the Application
 ```bash
 flask run
+# or
+python app.py
 ```
+Open your browser at `http://127.0.0.1:5000/`.
 
-The application will be available at `http://127.0.0.1:5000`
+---
 
-## Usage
+## Default Credentials & Usage
 
-### Admin Access
-1. Navigate to the login page
-2. Use admin credentials
-3. Access the admin dashboard to manage all system data
+### 1. Administrator Access
+- Create an initial administrator record directly in the `users` table or database seed with `role = 'admin'`.
+- Access all administrative panels: Borrowers, Loans, Repayments, and Reports.
 
-### Customer Access
-1. Login with customer credentials
-2. View personal loan portfolio
-3. Access repayment schedules and payment history
-
-## Key Endpoints
-
-### Authentication
-- `GET/POST /` - Login page
-
-### Admin Routes
-- `GET /admin/dashboard` - Admin dashboard
-- `GET/POST /admin/borrower/*` - Manage borrowers
-- `GET/POST /admin/loan/*` - Manage loans
-- `GET /admin/report` - Financial reports
-
-### Customer Routes
-- `GET /customer/dashboard` - Customer dashboard
-- `GET /customer/loan` - View loans
-- `GET /customer/schedule` - View repayment schedules
-- `GET /customer/profile` - Manage profile
-
-## Additional Features
-
-- **Responsive Design**: Mobile-friendly interface for all devices
-- **Interactive Charts**: Visual representation of financial data using Chart.js
-- **Data Validation**: Server-side and client-side validation
-- **Security**: Password hashing, CSRF protection, and role-based access control
-- **Audit Logging**: Track system activities and changes
-
-## Development Notes
-
-- The application uses SQLAlchemy for ORM with support for multiple database engines
-- Custom decorators enforce role-based access control
-- Flask blueprints organize routes by functionality
-- Jinja2 templating enables dynamic content rendering
-- SCSS/CSS provides a professional and consistent UI
-
-## Troubleshooting
-
-### Database Issues
-- Ensure the database path in `.env` is correct
-- Check that you have write permissions to the database directory
-- For fresh database setup, delete the existing database file and restart the app
-
-### Login Issues
-- Verify credentials are correct
-- Check that the user account is marked as active (is_active=True)
-- Ensure SECRET_KEY is properly set in .env
-
-## Future Enhancements
-
-- Email notifications for payment reminders
-- SMS notifications for important updates
-- Advanced reporting and analytics
-- Loan application workflow automation
-- Mobile app integration
-- Payment gateway integration
-
-## Support
-
-For issues or questions, please refer to the documentation or contact the development team.
+### 2. Borrower / Customer Access
+- Administrators can register new borrowers from `/admin/borrower/add`.
+- Borrowers log in at `/` using their assigned email and password to track installments and loan statuses.

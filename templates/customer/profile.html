@@ -27,10 +27,12 @@
                     <div class="card-body">
                         <!-- Header profile face -->
                         <div class="text-center pb-4 border-bottom">
-                            <img id="cust-profile-avatar" src="{{ url_for('static', filename='assets/images/faces/face2.jpg') }}" alt="profile"
+                            <img id="cust-profile-avatar"
+                                 src="{{ url_for('static', filename='assets/images/faces/face2.jpg') }}" alt="profile"
                                  class="img-lg rounded-circle mb-3"
                                  style="width:100px; height:100px; object-fit:cover;">
-                            <h3 class="font-weight-bold mb-1" id="cust-profile-name">{{ user.email.split('@')[0]|title if user and user.email else 'Customer' }}</h3>
+                            <h3 class="font-weight-bold mb-1"
+                                id="cust-profile-name">{{ user.email.split('@')[0]|title if user and user.email else 'Customer' }}</h3>
                         </div>
 
                         <div class="py-4 text-dark">
@@ -39,37 +41,43 @@
                                         class="mdi mdi-card-bulleted-outline mr-2 text-primary"></i>National ID /
                                     Passport
                                 </div>
-                                <div class="col-sm-8 text-muted" id="cust-profile-nid">{{ profile.national_id if profile and profile.national_id else '-' }}</div>
+                                <div class="col-sm-8 text-muted"
+                                     id="cust-profile-nid">{{ profile.national_id if profile and profile.national_id else '-' }}</div>
                             </div>
                             <div class="row mb-3">
                                 <div class="col-sm-4 font-weight-bold"><i class="mdi mdi-phone mr-2 text-primary"></i>Phone
                                     Number
                                 </div>
-                                <div class="col-sm-8 text-muted" id="cust-profile-phone">{{ profile.phone if profile and profile.phone else '-' }}</div>
+                                <div class="col-sm-8 text-muted"
+                                     id="cust-profile-phone">{{ profile.phone if profile and profile.phone else '-' }}</div>
                             </div>
                             <div class="row mb-3">
                                 <div class="col-sm-4 font-weight-bold"><i class="mdi mdi-email mr-2 text-primary"></i>Email
                                     Address
                                 </div>
-                                <div class="col-sm-8 text-muted text-break" id="cust-profile-email">{{ user.email if user and user.email else '-' }}</div>
+                                <div class="col-sm-8 text-muted text-break"
+                                     id="cust-profile-email">{{ user.email if user and user.email else '-' }}</div>
                             </div>
                             <div class="row mb-3">
                                 <div class="col-sm-4 font-weight-bold"><i
                                         class="mdi mdi-account-key mr-2 text-primary"></i>Login Username
                                 </div>
-                                <div class="col-sm-8 text-muted" id="cust-profile-username">{{ user.email if user and user.email else '-' }}</div>
+                                <div class="col-sm-8 text-muted"
+                                     id="cust-profile-username">{{ user.email if user and user.email else '-' }}</div>
                             </div>
                             <div class="row mb-3">
                                 <div class="col-sm-4 font-weight-bold"><i
                                         class="mdi mdi-calendar-text mr-2 text-primary"></i>Member Since
                                 </div>
-                                <div class="col-sm-8 text-muted" id="cust-profile-created">{{ user.created_at.strftime('%Y-%m-%d') if user and user.created_at else '-' }}</div>
+                                <div class="col-sm-8 text-muted"
+                                     id="cust-profile-created">{{ user.created_at.strftime('%Y-%m-%d') if user and user.created_at else '-' }}</div>
                             </div>
                             <div class="row">
                                 <div class="col-sm-4 font-weight-bold"><i
                                         class="mdi mdi-map-marker mr-2 text-primary"></i>Residential Address
                                 </div>
-                                <div class="col-sm-8 text-muted" id="cust-profile-address" style="line-height: 1.4;">{{ profile.address if profile and profile.address else '-' }}
+                                <div class="col-sm-8 text-muted" id="cust-profile-address"
+                                     style="line-height: 1.4;">{{ profile.address if profile and profile.address else '-' }}
                                 </div>
                             </div>
                         </div>

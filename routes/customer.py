@@ -1,11 +1,8 @@
-from datetime import datetime
-
 from dateutil.relativedelta import relativedelta
 from flask import Blueprint, render_template
 from flask_login import login_required, current_user
-from sqlalchemy import and_, select
+from sqlalchemy import and_
 
-from extension import db
 from models import RepaymentSchedule, Loan, User, CustomerProfile
 from models.repayment_schedule import Status
 

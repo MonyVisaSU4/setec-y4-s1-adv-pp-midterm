@@ -95,7 +95,8 @@
                                             <td class="text-success font-weight-bold">
                                                 ${{ "%.2f"|format(l.total_paid) }}
                                             </td>
-                                            <td><span class="badge badge-{{ l.status|lower }}">{{ l.status|lower }}</span>
+                                            <td><span
+                                                    class="badge badge-{{ l.status|lower }}">{{ l.status|lower }}</span>
                                             </td>
                                             <td> {{ l.start_date.strftime('%Y-%m-%d') }}</td>
 

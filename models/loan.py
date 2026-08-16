@@ -43,3 +43,19 @@ class Loan(db.Model):
         cascade='all, delete-orphan',
         passive_deletes=True
     )
+
+    def to_dict(self, include_repayments=False):
+        data = {
+            'loan_id': self.loan_id,
+            'customer_id': self.customer_id,
+            'amount': self.amount,
+            'interest_rate': self.interest_rate,
+            'tenure_month': self.tenure_month,
+            'start_date': self.start_date.isoformat() if self.start_date else None,
+            'status': self.status.value,
+            'total_payable': self.total_payable,
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+        }
+        if include_repayments:
+            data['repayment_schedule'] = [r.to_dict() for r in self.repayment_schedule]
+        return data

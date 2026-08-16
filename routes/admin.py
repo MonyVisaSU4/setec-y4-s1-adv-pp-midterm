@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, date
 
 from dateutil.relativedelta import relativedelta
 from flask import (
@@ -27,32 +27,47 @@ admin = Blueprint("admin", __name__, url_prefix="/")
 @admin_required
 @login_required
 def dashboard():
-    try:
-        overdue_loan = RepaymentSchedule.query.filter(RepaymentSchedule.status == Status_Repayment.OVERDUE).all()
-        total_borrower = db.session.query(
-            func.count(CustomerProfile.customer_id)
-        ).scalar()
-        active_loan = Loan.query.filter(Loan.status.like(Status_Loan.ACTIVE)).count()
-        total_disbursed = db.session.query(func.sum(Loan.amount)).scalar()
-        total_collected = db.session.query(
-            func.sum(RepaymentSchedule.amount_paid)
-        ).scalar()
-        overdue_installment = RepaymentSchedule.query.filter(
-            RepaymentSchedule.status.like(Status_Repayment.OVERDUE)
-        ).all()
+    data = {
+        'total_borrower': 0,
+        'active_loan': 0,
+        'total_disbursed': 0,
+        'total_collected': 0,
+        'overdue_installment': []
+    }
 
-        if len(overdue_installment) != 0:
-            overdue_loan = overdue_installment
+    try:
+        data['total_borrower'] = db.session.query(func.count(CustomerProfile.customer_id)).scalar()
+        data['active_loan'] = Loan.query.filter(Loan.status.like(Status_Loan.ACTIVE)).count()
+        data['total_disbursed'] = db.session.query(func.sum(Loan.amount)).scalar()
+        data['total_collected'] = db.session.query(func.sum(RepaymentSchedule.amount_paid)).scalar()
+
+        repayment_query = RepaymentSchedule.query
+        filter_status = repayment_query.filter(RepaymentSchedule._status == Status_Repayment.OVERDUE)
+        all_repayment = filter_status.all()
+
+        for g in all_repayment:
+            customer_profile_id = Loan.query.get_or_404(g.loan_id).customer_id
+            customer_profile = CustomerProfile.query.get_or_404(customer_profile_id)
+            user_id = User.query.get_or_404(customer_profile.user_id)
+            get_borrower_email = user_id.email
+
+            data['overdue_installment'].append({
+                'id': g.id,
+                'email': get_borrower_email,
+                'due_date': g.due_date,
+                'amount_due': g.amount_due,
+                'amount_paid': g.amount_paid
+            })
     except Exception as e:
         print(e)
 
     return render_template(
         "admin/dashboard.html",
-        overdue_loan=overdue_loan,
-        total_borrower=total_borrower,
-        active_loan=active_loan,
-        total_disbursed=total_disbursed,
-        total_collected=total_collected,
+        overdue_installment=data['overdue_installment'],
+        total_borrower=data['total_borrower'],
+        active_loan=data['active_loan'],
+        total_disbursed=data['total_disbursed'],
+        total_collected=data['total_collected'],
     )
 
 
@@ -86,14 +101,14 @@ def borrower():
 @login_required
 def filter_borrower():
     statement = select(
-                CustomerProfile.customer_id,
-                User.email,
-                CustomerProfile.address,
-                CustomerProfile.national_id,
-                CustomerProfile.phone,
-                CustomerProfile.created_at,
-            ).join(CustomerProfile, User.user_id == CustomerProfile.user_id)
-    
+        CustomerProfile.customer_id,
+        User.email,
+        CustomerProfile.address,
+        CustomerProfile.national_id,
+        CustomerProfile.phone,
+        CustomerProfile.created_at,
+    ).join(CustomerProfile, User.user_id == CustomerProfile.user_id)
+
     res = db.session.execute(statement).all()
     data = [dict(row._mapping) for row in res]
     return jsonify(data)
@@ -360,15 +375,15 @@ def add_loan():
 
                 for i in range(tenure):
                     replayment_schedule.append(
-                            RepaymentSchedule(
-                                loan_id=loans.loan_id,
-                                due_date=start_date + relativedelta(months=i + 1),
-                                amount_due=total_payable / tenure,
-                                amount_paid=0,
-                                status=Status_Repayment.PENDING,
-                                paid_date=None
-                            )
+                        RepaymentSchedule(
+                            loan_id=loans.loan_id,
+                            due_date=start_date + relativedelta(months=i + 1),
+                            amount_due=total_payable / tenure,
+                            amount_paid=0,
+                            status=Status_Repayment.PENDING,
+                            paid_date=None
                         )
+                    )
 
                 for r in replayment_schedule:
                     db.session.add(r)
@@ -464,3 +479,25 @@ def filter_report():
         return jsonify(audited_loan_records)
     except Exception as e:
         print(e)
+
+@admin.route('/admin/loan/repay/<int:id>', methods=['GET', 'POST'])
+@login_required
+@admin_required
+def repay(id):
+    repayment = RepaymentSchedule.query.get_or_404(id)
+
+    if request.method == "POST":
+        amount_paid = request.form['modalRepayAmount']
+
+        repayment.amount_paid = amount_paid
+        repayment.paid_date = date.today()
+        repayment.status = Status_Repayment.PAID
+        db.session.commit()
+        return jsonify({'message': 'success'})
+
+    req = {
+        'modal_amount_due': repayment.amount_due,
+        'modal_repay_amount': repayment.amount_paid,
+        'modal_pay_date': date.today().isoformat()
+    }
+    return jsonify(req)

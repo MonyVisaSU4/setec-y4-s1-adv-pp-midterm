@@ -67,13 +67,19 @@
                                         <tr data-status="{{ loan.status }}">
                                             <td class="font-weight-bold">${{ "%.2f"|format(loan.amount) }}</td>
                                             <td>{{ "%.0f"|format(loan.interest_rate) }}%</td>
-                                            <td>{{ loan.tenure_month }} month{% if loan.tenure_month != 1 %}s{% endif %}</td>
-                                            <td class="font-weight-bold text-dark">${{ "%.2f"|format(loan.total_payable) }}</td>
-                                            <td class="text-success font-weight-bold">${{ "%.2f"|format(loan.total_paid) }}</td>
-                                            <td><span class="badge badge-{{ loan.status|lower }}">{{ loan.status|lower }}</span></td>
+                                            <td>{{ loan.tenure_month }} month{% if loan.tenure_month != 1 %}
+                                                s{% endif %}</td>
+                                            <td class="font-weight-bold text-dark">
+                                                ${{ "%.2f"|format(loan.total_payable) }}</td>
+                                            <td class="text-success font-weight-bold">
+                                                ${{ "%.2f"|format(loan.total_paid) }}</td>
+                                            <td><span
+                                                    class="badge badge-{{ loan.status|lower }}">{{ loan.status|lower }}</span>
+                                            </td>
                                             <td>{{ loan.start_date.strftime('%Y-%m-%d') if loan.start_date else '-' }}</td>
                                             <td>
-                                                <a href="{{ url_for('customer.schedule', id=loan.loan_id) }}" class="btn btn-sm btn-gradient-info btn-icon-text">
+                                                <a href="{{ url_for('customer.schedule', id=loan.loan_id) }}"
+                                                   class="btn btn-sm btn-gradient-info btn-icon-text">
                                                     <i class="mdi mdi-eye mr-1"></i>View Schedule
                                                 </a>
                                             </td>

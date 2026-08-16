@@ -1,7 +1,7 @@
-from datetime import datetime, date
+from datetime import date
 from enum import StrEnum
 
-from sqlalchemy import Integer, ForeignKey, DateTime, Float, Enum, Date
+from sqlalchemy import Integer, ForeignKey, Float, Enum, Date
 from sqlalchemy.orm import Mapped, relationship, mapped_column
 
 from extension import db
@@ -42,3 +42,14 @@ class RepaymentSchedule(db.Model):
     @status.setter
     def status(self, value):
         self._status = value
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'loan_id': self.loan_id,
+            'due_date': self.due_date.isoformat() if self.due_date else None,
+            'amount_due': self.amount_due,
+            'amount_paid': self.amount_paid,
+            'status': self.status.value,  # uses the @property, so OVERDUE logic applies
+            'paid_date': self.paid_date.isoformat() if self.paid_date else None,
+        }
