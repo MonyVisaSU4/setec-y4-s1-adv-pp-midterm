@@ -24,7 +24,7 @@ A full-stack, enterprise-grade Financial Loan Management System built with **Pyt
 
 The Loan Management System is organized as a modular Flask MVC application using Blueprints, declarative SQLAlchemy 2.0 ORM mappings, secure session management, and scheduled background workers.
 
-```mermaid
+```
 graph TD
     Client[Web Browser / Client] -->|HTTP Requests| FlaskApp[Flask Application (app.py)]
     FlaskApp -->|Auth & Session| FlaskLogin[Flask-Login & Werkzeug Security]
